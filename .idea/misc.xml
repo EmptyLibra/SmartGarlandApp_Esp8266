@@ -3,7 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.3482051282051282" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/activity_main.xml" value="0.25" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.18" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.20208333333333334" />
       </map>
     </option>
   </component>

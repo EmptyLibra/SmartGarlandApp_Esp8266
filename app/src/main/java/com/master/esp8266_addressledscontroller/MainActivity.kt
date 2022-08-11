@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import com.master.esp8266_addressledscontroller.databinding.ActivityMainBinding
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -12,14 +13,20 @@ import java.io.IOException
 
 /* Для связи с МК по wi-fi надо:
 * 1. Добавить в AndroidManifest разрешение на использование интернета и http.
-* 2. Добавить в build.gradle (Module) библиотеку okhttp3 */
+* 2. Добавить в build.gradle (Module) библиотеку okhttp3
+*
+*Почитать о:
+*  Тестирование мобильных приложений.
+*
+* */
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var  request: Request
+    private lateinit var  request: Request              // Класс для формирования http запросов
     private lateinit var  binding: ActivityMainBinding
-    private lateinit var pref: SharedPreferences
+    private lateinit var pref: SharedPreferences        // Класс для сохранения значений (при закрытии приложения)
     private val client = OkHttpClient()
 
+    // Функция создания активности (вызывается при её создании)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -33,6 +40,8 @@ class MainActivity : AppCompatActivity() {
             bLed2.setOnClickListener(onClickListener())
             bLed3.setOnClickListener(onClickListener())
         }
+
+        Log.d("MY_LOGS", "Method: onCreate()")
     }
 
     private fun onClickListener(): View.OnClickListener {
@@ -61,8 +70,8 @@ class MainActivity : AppCompatActivity() {
     // Получение ip из памяти
     private fun getIp() = with(binding) {
         val ip = pref.getString("ip", "")
-        if(ip != null) {
-            if(ip.isNotEmpty()) edip.setText(ip)
+        if(ip != null && ip.isNotEmpty()) {
+            edip.setText(ip)
         }
     }
 
