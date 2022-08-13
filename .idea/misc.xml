@@ -3,10 +3,23 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.3482051282051282" />
-        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/activity_main.xml" value="0.25" />
-        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.18" />
-        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.20208333333333334" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable-anydpi/app_background.xml" value="0.20208333333333334" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/btn_toggle.xml" value="0.23333333333333334" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/btn_toggle_bg.xml" value="0.23333333333333334" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/color_picker_circle.xml" value="0.20208333333333334" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/my_toggle_bt.xml" value="0.13472222222222222" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/toggle_selector.xml" value="0.13472222222222222" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/toggle_state_off.xml" value="0.13472222222222222" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/drawable/toggle_state_on.xml" value="0.13472222222222222" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/activity_main.xml" value="0.22" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/app_bar_main.xml" value="0.25" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/drawer_test.xml" value="0.22962962962962963" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/fragment_drawing.xml" value="0.22" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/fragment_settings.xml" value="0.25" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/fragment_settings_main.xml" value="0.25" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/nav_menu_header.xml" value="0.1859375" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/layout/toolbar.xml" value="0.1859375" />
+        <entry key="..\:/AllAplications/All_for_Java/All_for_android_app/AndroidApps/Esp8266_AddressLedsController/app/src/main/res/menu/nav_menu.xml" value="0.33" />
       </map>
     </option>
   </component>

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Smart Leds</string>
+
+    <string name="hello_blank_fragment">Здесь будет рисовалка</string>
 </resources>
