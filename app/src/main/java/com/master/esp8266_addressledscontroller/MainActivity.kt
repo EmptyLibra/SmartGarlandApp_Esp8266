@@ -27,6 +27,9 @@ import com.master.esp8266_addressledscontroller.nav_fragments.SettingsFragment
 * 1. Добавить в AndroidManifest разрешение на использование интернета и http.
 * 2. Добавить в build.gradle (Module) библиотеку okhttp3
 *
+* Что сделать:
+* 1. Добавить список эффектов с Recycle view
+*
 * Запуск отладки по wifi: StartWifiDebug.bat
 *Почитать о:
 *  Тестирование мобильных приложений.
@@ -90,7 +93,7 @@ class MainActivity : AppCompatActivity() {
     // Обработка нажатий кнопок на ToolBar
     override fun onOptionsItemSelected(item: MenuItem): Boolean = with(mainBinding) {
         when(item.itemId){
-            android.R.id.home -> {
+            id.home -> {
                 if(drawer.isDrawerOpen(GravityCompat.START)) {
                     drawer.closeDrawer(GravityCompat.START)
                 } else {

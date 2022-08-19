@@ -9,7 +9,7 @@
         android:id="@+id/tvConnectStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="132dp"
         android:layout_marginTop="16dp"
         android:gravity="center|start"
         android:text="Статус: не подключён"
@@ -17,40 +17,42 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchConnect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:gravity="center"
-        android:text="Включена"
-        app:layout_constraintStart_toStartOf="@+id/tvConnectStatus"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <View
         android:id="@+id/view"
         style="@style/divider"
         android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.073"
+        app:layout_constraintHorizontal_bias="0.505"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/switchConnect" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchConnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="48dp"
+        android:gravity="center"
+        android:checked="false"
+        android:text="Отключена"
+        app:layout_constraintStart_toStartOf="@+id/tvConnectStatus"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:id="@+id/linearLayoutCompat"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="172dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="124dp"
+        android:layout_marginEnd="8dp"
         android:orientation="vertical"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/tvColor"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hello"
+            android:text="Red: 0, Green: 0, Blue: 0}\nЦвет: #00000000"
             android:textAlignment="center" />
 
         <com.skydoves.colorpickerview.ColorPickerView
@@ -60,7 +62,8 @@
             android:layout_gravity="center"
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
-            app:preferenceName="colorPickerWheel" />
+            app:initialColor="@color/white"
+            app:debounceDuration="15"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -81,14 +84,6 @@
             app:selector_BrightnessSlider="@drawable/wheel">
 
         </com.skydoves.colorpickerview.sliders.BrightnessSlideBar>
-
-        <Button
-            android:id="@+id/btSendColor"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Установить цвет" />
-
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <Button
@@ -115,23 +110,76 @@
         android:id="@+id/bLed3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="72dp"
+        android:layout_marginBottom="280dp"
         android:text="mode3"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.845"
+        app:layout_constraintHorizontal_bias="0.114"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tvState"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="408dp"
-        android:layout_marginEnd="80dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="76dp"
         android:gravity="center|start"
         android:hint="Ответ"
         android:textAlignment="gravity"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:layout_width="409dp"
+        android:layout_height="237dp"
+        android:contentDescription="@string/hello_blank_fragment"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayoutCompat">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
+
+            <Button
+                android:id="@+id/button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Эффект1" />
+
+            <Button
+                android:id="@+id/button2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Эффект2" />
+
+            <Button
+                android:id="@+id/button3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Эффект3" />
+
+            <Button
+                android:id="@+id/button4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Эффект4" />
+
+            <Button
+                android:id="@+id/button5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Эффект5" />
+
+            <Button
+                android:id="@+id/button6"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Эффект6" />
+        </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

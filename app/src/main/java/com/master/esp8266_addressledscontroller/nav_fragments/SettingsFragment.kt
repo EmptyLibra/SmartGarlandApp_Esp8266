@@ -16,13 +16,20 @@ import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
+import java.sql.Time
+import java.time.LocalTime
 
 class SettingsFragment : Fragment() {
     private lateinit var  request: Request              // Класс для формирования http запросов
     private lateinit var binding: FragmentSettingsBinding
     private val client = OkHttpClient()
     private lateinit var pref: SharedPreferences        // Класс для сохранения значений (при закрытии приложения)
-    private var ip: String = "192.168.1.17"
+    private val ip: String = "192.168.1.17"
+
+    private var isNeedSwitchListener : Boolean = true
+    private var isNeedSColorListener : Boolean = true
+    private var prevColor : Int = 0
+    private var curTime  = System.currentTimeMillis()
 
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables", "SetTextI18n")
     override fun onCreateView(
@@ -30,57 +37,32 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentSettingsBinding.inflate(inflater, container, false)
+
         //
         pref = activity?.getSharedPreferences("MyPref", AppCompatActivity.MODE_PRIVATE)!!
-        binding.switchConnect.isChecked = true  // Включение гирлянды и получение ip
-        post( "cmd","powerOn")
+        isNeedSColorListener = false
+        post( "cmd?getState=1&getBaseColor=1")
 
+        colorPickerViewOnClickListener()  // Обработчик нажатий цветового круга
+        connectSwitchOnClickListener()    // Обработчик переключателя состояния гирлянды
+        //----------- Обработчики нажатий кнопок -----------
         binding.apply {
-
-            switchConnect.setOnCheckedChangeListener { _, isChecked ->
-                if(tvConnectStatus.text == "Статус: не отвечает") {
-                    tvConnectStatus.text = "Статус: не отвечает!"
-                    return@setOnCheckedChangeListener
-                }
-
-                if(tvConnectStatus.text == "Статус: Ожидаем ответа...") {
-                    switchConnect.isChecked = !isChecked
-                    return@setOnCheckedChangeListener
-                }
-
-                if(isChecked) {
-                    tvConnectStatus.text = "Статус: Пдключение..."
-                    post( "cmd","powerOn")
-                    switchConnect.text = "Включена"
-                } else {
-                    post( "cmd","powerOff")
-                    switchConnect.text = "Отключена"
-                }
-
-            }
-
-            colorPickerWheel.attachBrightnessSlider(brightnessSlideBar)
-            colorPickerWheel.setColorListener(ColorEnvelopeListener { envelope, _ ->
-                tvColor.text = "Red:${envelope.argb[1]}, Green: ${envelope.argb[2]}, Blue: ${envelope.argb[3]}\n" +
-                               "Цвет: #${envelope.hexCode}"
-
-                tvColor.setTextColor(envelope.color)
-            })
-
-            btSendColor.setOnClickListener(onClickListener())
-            bLed1.setOnClickListener(onClickListener())
-            bLed2.setOnClickListener(onClickListener())
-            bLed3.setOnClickListener(onClickListener())
+            bLed1.setOnClickListener(buttonsOnClickListener())
+            bLed2.setOnClickListener(buttonsOnClickListener())
+            bLed3.setOnClickListener(buttonsOnClickListener())
         }
 
         return binding.root
     }
 
+    // Сохранение всех данных
     override fun onPause() =with(binding){
         super.onPause()
         saveFragmentData()
+        post( "cmd?saveAllConfig=1")
     }
 
+    // Загрузка всех данных
     override fun onResume() {
         super.onResume()
         getFragmentData()
@@ -91,49 +73,92 @@ class SettingsFragment : Fragment() {
         fun newInstance() = SettingsFragment()
     }
 
-    private fun onClickListener(): View.OnClickListener {
+    // Обработчик нажатий кнопок
+    private fun buttonsOnClickListener(): View.OnClickListener =with(binding){
         return View.OnClickListener {
-            when(it.id) {
-                R.id.bLed1 -> { post("effect","mode1")}
-                R.id.bLed2 -> { post("effect", "mode2")}
-                R.id.bLed3 -> { post("effect","mode3")}//{ post("mode3")}
-
-                R.id.btSendColor -> { post("setBaseColor", binding.tvColor.text.toString().substringAfter('#'))}
+            if(switchConnect.isChecked) {
+                when(it.id) {
+                    R.id.bLed1 -> { post("effect?ef=mode1")}
+                    R.id.bLed2 -> { post("effect?ef=mode2")}
+                    R.id.bLed3 -> { post("effect?ef=mode3")}
+                }
+            } else if(tvConnectStatus.text != "Статус: не отвечает!"){
+                Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
             }
+
         }
     }
 
+    // Установка обработчика нажатий цветового круга
+    @SuppressLint("SetTextI18n")
+    private fun colorPickerViewOnClickListener() =with(binding){
+        //----------- Цветовой круг ----------
+        // Привязка ползунка яркости к кругу
+        colorPickerWheel.attachBrightnessSlider(brightnessSlideBar)
+
+        // Обработчик нажатий для Цветового круга
+        colorPickerWheel.setColorListener(ColorEnvelopeListener { envelope, _ ->
+            tvColor.text =
+                "Red:${envelope.argb[1]}, Green: ${envelope.argb[2]}, Blue: ${envelope.argb[3]}\nЦвет: #${envelope.hexCode}"
+            tvColor.setTextColor(envelope.color)
+
+            if (!isNeedSColorListener) {
+                isNeedSColorListener = true
+                return@ColorEnvelopeListener
+            }
+            if(tvConnectStatus.text == "Статус: подключено!" && switchConnect.isChecked) {
+                if ((prevColor != envelope.color) && (System.currentTimeMillis() - curTime > 100)) {
+                    curTime  = System.currentTimeMillis()
+                    prevColor = envelope.color
+                    post("setBaseColor?color=${colorPickerWheel.colorEnvelope.hexCode}")
+                }
+            }
+        })
+    }
+
+    // Установка обработчика переключателя состояния гирлянды
+    private fun connectSwitchOnClickListener() = with(binding){
+        //----------- Обработчик наждатий на ползунок состояния ----------
+        switchConnect.setOnCheckedChangeListener { _, isChecked ->
+            if(!isNeedSwitchListener) {
+                isNeedSwitchListener = true
+                return@setOnCheckedChangeListener
+            }
+
+            if(tvConnectStatus.text == "Статус: Ожидаем ответа...") {
+                switchConnect.isChecked = !isChecked
+                return@setOnCheckedChangeListener
+            }
+
+            tvConnectStatus.text = "Статус: Пдключение..."
+            post( "cmd?setState=${if(isChecked) "1" else "0"}")
+            switchConnect.text = if(isChecked) "Включена" else "Отключена"
+        }
+    }
+
+    // Сохраняем все данные фрагмента
     private fun saveFragmentData() =with(binding){
         val editor = pref.edit()
         editor.putString("answer", tvState.text.toString())
-        editor.putString("ip", ip)
 
-        colorPickerWheel.setLifecycleOwner(this@SettingsFragment)
+        //colorPickerWheel.setLifecycleOwner(this@SettingsFragment)
         editor.apply()
     }
 
+    // Получаем все данные фрагмента
     private fun getFragmentData() = with(binding) {
-        var data = pref.getString("ip", "")
-        if(data != null && data.isNotEmpty()) { ip = data }
-
-        data = pref.getString("answer", "")
+        val data = pref.getString("answer", "")
         if(data != null && data.isNotEmpty()) { tvState.text = data }
     }
 
-    // Отправка команды на Esp и приём от неё ответа
+    // Отправка команды на Esp и приём от неё ответа вида http://<destination_ip>/<command>?<param>=<value>
     @SuppressLint("SetTextI18n")
-    private fun post(command: String, status: String = "") = with(binding){
+    private fun post(command: String) = with(binding){
 
         // Отправляем запрос в отдельном потоке, т.к. это затратная операция
         Thread {
             // Формируем запрос вида: http://<destination_ip>/<command>?<param>=<value>
-            val sCommand: String = command + when(command) {
-                "setBaseColor" -> "?color=$status"
-                "effect" -> "?ef=$status"
-                "cmd" -> "?cmd=$status"
-                else -> ""
-            }
-            request = Request.Builder().url("http://$ip/$sCommand").build()
+            request = Request.Builder().url("http://$ip/$command").build()
             Log.d("MY_LOGS", "Android: ${request.url()}")
 
             activity?.runOnUiThread {
@@ -142,7 +167,7 @@ class SettingsFragment : Fragment() {
 
             try{
                 // Отправляем запрос
-                var response = client.newCall(request).execute()
+                val response = client.newCall(request).execute()
                 if(response.isSuccessful) {
                     // Получаем ответ
                     val resultText = response.body()?.string()
@@ -150,18 +175,36 @@ class SettingsFragment : Fragment() {
 
                     activity?.runOnUiThread{
                         tvState.text = resultText
-                        tvConnectStatus.text = "Статус: Подключено!"
-                        if(status == "powerOn" || status == "powerOff") {
-                            tvConnectStatus.text = tvConnectStatus.text.toString() + "\nip: $resultText"
+                        tvConnectStatus.text = "Статус: подключено!"
+
+                        if(command.contains("getState") && resultText != null) {
+                                if(resultText.substringAfter("state=").substringBefore(';').toInt() == 1) {
+                                    isNeedSwitchListener = false
+                                    switchConnect.isChecked = true
+                                    switchConnect.text = "Включена"
+                                } else {
+                                    switchConnect.isChecked = false
+                                    switchConnect.text = "Отключена"
+                                }
+                        }
+
+                        if(command.contains("getBaseColor")) {
                             if (resultText != null) {
-                                ip = resultText
+                                isNeedSColorListener = false
+                                colorPickerWheel.selectByHsvColor(resultText.substringAfter("color=").substringBefore(';').toInt(16))
+                                tvColor.text = "Red:${colorPickerWheel.colorEnvelope.argb[1]}, " +
+                                        "Green: ${colorPickerWheel.colorEnvelope.argb[2]}, " +
+                                        "Blue: ${colorPickerWheel.colorEnvelope.argb[3]}\n" +
+                                        "Цвет: #${colorPickerWheel.colorEnvelope.hexCode}"
+                                tvColor.setTextColor(colorPickerWheel.colorEnvelope.color)
                             }
                         }
                     }
                 } else {
                     activity?.runOnUiThread {
-                        tvConnectStatus.text = "Статус: не отвечает"
-                        if(status == "powerOff" || status == "powerOn") {
+                        tvConnectStatus.text = "Статус: не отвечает!"
+                        if(command.contains("setState")) {
+                            isNeedSwitchListener = false
                             switchConnect.text = "Отключена"
                             switchConnect.isChecked = !switchConnect.isChecked
                         }
@@ -171,8 +214,9 @@ class SettingsFragment : Fragment() {
                 }
             } catch(i: IOException){
                 activity?.runOnUiThread {
-                    tvConnectStatus.text = "Статус: не отвечает"
-                    if(status == "powerOff" || status == "powerOn") {
+                    tvConnectStatus.text = "Статус: не отвечает!"
+                    if(command.contains("setState")) {
+                        isNeedSwitchListener = false
                         switchConnect.text = "Отключена"
                         switchConnect.isChecked = !switchConnect.isChecked
                     }
