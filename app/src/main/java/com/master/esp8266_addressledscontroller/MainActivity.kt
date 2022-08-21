@@ -1,23 +1,12 @@
 package com.master.esp8266_addressledscontroller
 
-import android.content.SharedPreferences
-import androidx.appcompat.app.AppCompatActivity
+import android.R.id
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.io.IOException
-import androidx.drawerlayout.widget.DrawerLayout
-
-import android.R.id
-import androidx.appcompat.app.ActionBar
-import androidx.appcompat.widget.Toolbar
 import com.master.esp8266_addressledscontroller.databinding.ActivityMainBinding
 import com.master.esp8266_addressledscontroller.nav_fragments.DrawingFragment
 import com.master.esp8266_addressledscontroller.nav_fragments.SettingsFragment

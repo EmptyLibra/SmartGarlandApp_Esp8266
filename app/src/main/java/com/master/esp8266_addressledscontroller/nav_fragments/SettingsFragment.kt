@@ -16,8 +16,6 @@ import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
-import java.sql.Time
-import java.time.LocalTime
 
 class SettingsFragment : Fragment() {
     private lateinit var  request: Request              // Класс для формирования http запросов
@@ -41,7 +39,6 @@ class SettingsFragment : Fragment() {
         //
         pref = activity?.getSharedPreferences("MyPref", AppCompatActivity.MODE_PRIVATE)!!
         isNeedSColorListener = false
-        post( "cmd?getState=1&getBaseColor=1")
 
         colorPickerViewOnClickListener()  // Обработчик нажатий цветового круга
         connectSwitchOnClickListener()    // Обработчик переключателя состояния гирлянды
@@ -55,17 +52,17 @@ class SettingsFragment : Fragment() {
         return binding.root
     }
 
-    // Сохранение всех данных
-    override fun onPause() =with(binding){
-        super.onPause()
-        saveFragmentData()
-        post( "cmd?saveAllConfig=1")
-    }
-
     // Загрузка всех данных
     override fun onResume() {
         super.onResume()
         getFragmentData()
+        post( "cmd?getAllConfig=1")
+    }
+
+    // Сохранение всех данных перед уничтожением фрагмента
+    override fun onDestroyView() {
+        super.onDestroyView()
+        post( "cmd?saveAllConfig=1")
     }
 
     companion object{
@@ -136,14 +133,14 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    // Сохраняем все данные фрагмента
+    /* Сохраняем все данные фрагмента
     private fun saveFragmentData() =with(binding){
         val editor = pref.edit()
         editor.putString("answer", tvState.text.toString())
 
         //colorPickerWheel.setLifecycleOwner(this@SettingsFragment)
         editor.apply()
-    }
+    } */
 
     // Получаем все данные фрагмента
     private fun getFragmentData() = with(binding) {
@@ -177,26 +174,29 @@ class SettingsFragment : Fragment() {
                         tvState.text = resultText
                         tvConnectStatus.text = "Статус: подключено!"
 
-                        if(command.contains("getState") && resultText != null) {
-                                if(resultText.substringAfter("state=").substringBefore(';').toInt() == 1) {
-                                    isNeedSwitchListener = false
-                                    switchConnect.isChecked = true
-                                    switchConnect.text = "Включена"
-                                } else {
-                                    switchConnect.isChecked = false
-                                    switchConnect.text = "Отключена"
-                                }
-                        }
+                        // Обработка ответа
+                        if(command.contains("getAllConfig") && resultText != null) {
+                            for(elem in resultText.split(";")) {
+                                val arr = elem.split("=")
+                                when(arr[0]) {
+                                    // Установка состояния гирлянды
+                                    "state" -> {
+                                        isNeedSwitchListener = arr[1].toInt() != 1
+                                        switchConnect.isChecked = arr[1].toInt() == 1
+                                        switchConnect.text = if(arr[1].toInt() == 1) "Включена" else "Отключена"
+                                    }
 
-                        if(command.contains("getBaseColor")) {
-                            if (resultText != null) {
-                                isNeedSColorListener = false
-                                colorPickerWheel.selectByHsvColor(resultText.substringAfter("color=").substringBefore(';').toInt(16))
-                                tvColor.text = "Red:${colorPickerWheel.colorEnvelope.argb[1]}, " +
-                                        "Green: ${colorPickerWheel.colorEnvelope.argb[2]}, " +
-                                        "Blue: ${colorPickerWheel.colorEnvelope.argb[3]}\n" +
-                                        "Цвет: #${colorPickerWheel.colorEnvelope.hexCode}"
-                                tvColor.setTextColor(colorPickerWheel.colorEnvelope.color)
+                                    // Установка цвета гирлянды
+                                    "color" -> {
+                                        isNeedSColorListener = false
+                                        colorPickerWheel.selectByHsvColor(arr[1].toInt(16))
+                                        tvColor.text = "Red:${colorPickerWheel.colorEnvelope.argb[1]}, " +
+                                                "Green: ${colorPickerWheel.colorEnvelope.argb[2]}, " +
+                                                "Blue: ${colorPickerWheel.colorEnvelope.argb[3]}\n" +
+                                                "Цвет: #${colorPickerWheel.colorEnvelope.hexCode}"
+                                        tvColor.setTextColor(colorPickerWheel.colorEnvelope.color)
+                                    }
+                                }
                             }
                         }
                     }
