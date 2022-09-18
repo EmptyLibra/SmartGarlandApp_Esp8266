@@ -2,8 +2,8 @@
     <!-- Base application theme. -->
     <style name="Theme.Esp8266_AddressLedsController" parent="Theme.MaterialComponents.Light.DarkActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_500</item>  <!-- Основной цвет интерфейса программы -->
-        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorPrimary">@color/purple_500</item>  <!-- Основной цвет интерфейса программы, Status bar -->
+        <item name="colorPrimaryVariant">@color/purple_700</item> <!-- Status bar -->
         <item name="colorOnPrimary">#FDA829</item>
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>

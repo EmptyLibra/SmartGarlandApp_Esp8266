@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.master.esp8266_addressledscontroller.R
 import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
@@ -17,7 +18,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
 
-class SettingsFragment : Fragment() {
+class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
     private lateinit var  request: Request              // Класс для формирования http запросов
     private lateinit var binding: FragmentSettingsBinding
     private val client = OkHttpClient()
@@ -42,11 +43,12 @@ class SettingsFragment : Fragment() {
 
         colorPickerViewOnClickListener()  // Обработчик нажатий цветового круга
         connectSwitchOnClickListener()    // Обработчик переключателя состояния гирлянды
+
         //----------- Обработчики нажатий кнопок -----------
         binding.apply {
-            bLed1.setOnClickListener(buttonsOnClickListener())
-            bLed2.setOnClickListener(buttonsOnClickListener())
-            bLed3.setOnClickListener(buttonsOnClickListener())
+            // Настраиваем список эффектов
+            effectsList.layoutManager = LinearLayoutManager(this@SettingsFragment.context)
+            effectsList.adapter = EffectsListAdapter(this@SettingsFragment) // Адаптер для списка с эффектами
         }
 
         return binding.root
@@ -70,19 +72,13 @@ class SettingsFragment : Fragment() {
         fun newInstance() = SettingsFragment()
     }
 
-    // Обработчик нажатий кнопок
-    private fun buttonsOnClickListener(): View.OnClickListener =with(binding){
-        return View.OnClickListener {
-            if(switchConnect.isChecked) {
-                when(it.id) {
-                    R.id.bLed1 -> { post("effect?ef=mode1")}
-                    R.id.bLed2 -> { post("effect?ef=mode2")}
-                    R.id.bLed3 -> { post("effect?ef=mode3")}
-                }
-            } else if(tvConnectStatus.text != "Статус: не отвечает!"){
-                Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
-            }
+    // Обработчик нажатий на элементы списка с эффектами
+    override fun effectListOnItemClick(effect: Effect) =with(binding) {
+        if(switchConnect.isChecked) {
+            post("effect?ef=mode${effect.index}") // Запуск эффекта
 
+        }  else if(tvConnectStatus.text != "Статус: не отвечает!"){
+            Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -150,7 +146,7 @@ class SettingsFragment : Fragment() {
 
     // Отправка команды на Esp и приём от неё ответа вида http://<destination_ip>/<command>?<param>=<value>
     @SuppressLint("SetTextI18n")
-    private fun post(command: String) = with(binding){
+    fun post(command: String) = with(binding){
 
         // Отправляем запрос в отдельном потоке, т.к. это затратная операция
         Thread {

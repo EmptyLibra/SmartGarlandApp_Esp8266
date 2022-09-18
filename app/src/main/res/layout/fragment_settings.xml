@@ -1,185 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <TextView
-        android:id="@+id/tvConnectStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="132dp"
-        android:layout_marginTop="16dp"
-        android:gravity="center|start"
-        android:text="Статус: не подключён"
-        android:textAlignment="gravity"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <View
-        android:id="@+id/view"
-        style="@style/divider"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.505"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switchConnect" />
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchConnect"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="48dp"
-        android:gravity="center"
-        android:checked="false"
-        android:text="Отключена"
-        app:layout_constraintStart_toStartOf="@+id/tvConnectStatus"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/linearLayoutCompat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="124dp"
-        android:layout_marginEnd="8dp"
-        android:orientation="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2">
 
         <TextView
-            android:id="@+id/tvColor"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Red: 0, Green: 0, Blue: 0}\nЦвет: #00000000"
-            android:textAlignment="center" />
-
-        <com.skydoves.colorpickerview.ColorPickerView
-            android:id="@+id/colorPickerWheel"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:layout_gravity="center"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            app:initialColor="@color/white"
-            app:debounceDuration="15"/>
-
-        <TextView
+            android:id="@+id/tvConnectStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Яркость" />
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center|start"
+            android:text="Статус: не подключён"
+            android:textAlignment="gravity"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <com.skydoves.colorpickerview.sliders.BrightnessSlideBar
-            android:id="@+id/brightnessSlideBar"
-            android:layout_width="200dp"
+        <View
+            android:id="@+id/view"
+            style="@style/divider"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.099"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/switchConnect" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchConnect"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginBottom="10dp"
-            app:borderColor_BrightnessSlider="@color/purple_700"
-            app:selector_BrightnessSlider="@drawable/wheel">
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="48dp"
+            android:checked="false"
+            android:gravity="center"
+            android:text="Отключена"
+            android:textSize="20sp"
+            app:layout_constraintStart_toStartOf="@+id/tvConnectStatus"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        </com.skydoves.colorpickerview.sliders.BrightnessSlideBar>
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
-    <Button
-        android:id="@+id/bLed1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="mode1"
-        app:layout_constraintBottom_toTopOf="@+id/bLed2"
-        app:layout_constraintEnd_toEndOf="@+id/bLed2"
-        app:layout_constraintStart_toStartOf="@+id/bLed2" />
-
-    <Button
-        android:id="@+id/bLed2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="mode2"
-        app:layout_constraintBottom_toTopOf="@+id/bLed3"
-        app:layout_constraintEnd_toEndOf="@+id/bLed3"
-        app:layout_constraintStart_toStartOf="@+id/bLed3" />
-
-    <Button
-        android:id="@+id/bLed3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="280dp"
-        android:text="mode3"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.114"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
-        android:id="@+id/tvState"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="76dp"
-        android:gravity="center|start"
-        android:hint="Ответ"
-        android:textAlignment="gravity"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ScrollView
-        android:layout_width="409dp"
-        android:layout_height="237dp"
-        android:contentDescription="@string/hello_blank_fragment"
-        android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayoutCompat">
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/linearLayoutCompat"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:layout_marginTop="124dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <Button
-                android:id="@+id/button"
+            <TextView
+                android:id="@+id/tvColor"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Эффект1" />
+                android:text="Red: 0, Green: 0, Blue: 0}\nЦвет: #00000000"
+                android:textAlignment="center" />
 
-            <Button
-                android:id="@+id/button2"
-                android:layout_width="match_parent"
+            <com.skydoves.colorpickerview.ColorPickerView
+                android:id="@+id/colorPickerWheel"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                app:initialColor="@color/white"
+                app:debounceDuration="15"/>
+
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Эффект2" />
+                android:layout_gravity="center"
+                android:text="Яркость" />
 
-            <Button
-                android:id="@+id/button3"
-                android:layout_width="match_parent"
+            <com.skydoves.colorpickerview.sliders.BrightnessSlideBar
+                android:id="@+id/brightnessSlideBar"
+                android:layout_width="200dp"
                 android:layout_height="wrap_content"
-                android:text="Эффект3" />
+                android:layout_gravity="center"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="10dp"
+                app:borderColor_BrightnessSlider="@color/purple_700"
+                app:selector_BrightnessSlider="@drawable/wheel">
 
-            <Button
-                android:id="@+id/button4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Эффект4" />
+            </com.skydoves.colorpickerview.sliders.BrightnessSlideBar>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
-            <Button
-                android:id="@+id/button5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Эффект5" />
+        <TextView
+            android:id="@+id/tvState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:layout_marginEnd="16dp"
+            android:gravity="center"
+            android:hint="Ответ"
+            android:textAlignment="gravity"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <Button
-                android:id="@+id/button6"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Эффект6" />
-        </LinearLayout>
-    </ScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/effectsList"
+        android:padding="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>
