@@ -107,6 +107,29 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <SeekBar
+            android:id="@+id/seekBarEffectDelay"
+            android:layout_width="100dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:progress="50"
+            android:max="200"
+            app:layout_constraintEnd_toEndOf="@+id/tvEffectDelay"
+            app:layout_constraintStart_toStartOf="@+id/tvEffectDelay"
+            app:layout_constraintTop_toBottomOf="@+id/tvEffectDelay" />
+
+        <TextView
+            android:id="@+id/tvEffectDelay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="50dp"
+            android:text="Задержка эффекта: "
+            android:textAlignment="center"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView

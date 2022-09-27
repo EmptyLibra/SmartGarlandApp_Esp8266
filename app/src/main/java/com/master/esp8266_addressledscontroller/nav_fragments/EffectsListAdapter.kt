@@ -7,15 +7,27 @@ import androidx.recyclerview.widget.RecyclerView
 import com.master.esp8266_addressledscontroller.R
 import com.master.esp8266_addressledscontroller.databinding.EffectItemBinding
 
-
 // Класс-модель для одного эффекта (хранит данные эффекта
-data class Effect(val imageId: Int, val name: String, val index: Int)
+data class Effect(val imageId: Int, val name: String, val index: Int, val standartDelay: Int)
 
 // Адаптер, заполняющий список
 class EffectsListAdapter(private val listener: Listener): RecyclerView.Adapter<EffectsListAdapter.ListHolder>() {
-    private val effectsNameArr = arrayOf("Один цвет", "Радуга", "Конфети", "Заполнение")
-    private val effectList: Array<Effect> = Array(effectsNameArr.size) { i -> Effect(android.R.drawable.btn_star_big_on, effectsNameArr[i], i)}
-
+    private val effectList: Array<Effect> = arrayOf(
+        Effect(android.R.drawable.btn_star_big_on, "Один цвет",       0,  0),
+        Effect(android.R.drawable.btn_star_big_on, "Радуга",          1,  40),
+        Effect(android.R.drawable.btn_star_big_on, "Конфети",         2,  20),
+        Effect(android.R.drawable.btn_star_big_on, "Заполнитель",     3,  10),
+        Effect(android.R.drawable.btn_star_big_on, "Блуждающий кубик",4,  130),
+        Effect(android.R.drawable.btn_star_big_on, "Снег",            5,  140),
+        Effect(android.R.drawable.btn_star_big_on, "Матрица",         6,  140),
+        Effect(android.R.drawable.btn_star_big_on, "Падающие звёзды", 7,  140),
+        Effect(android.R.drawable.btn_star_big_on, "Эффект9",         8,  10),
+        Effect(android.R.drawable.btn_star_big_on, "Эффект10",        9,  10),
+        Effect(android.R.drawable.btn_star_big_on, "Эффект11",        10, 10),
+        Effect(android.R.drawable.btn_star_big_on, "Эффект12",        11, 10),
+        Effect(android.R.drawable.btn_star_big_on, "Эффект13",        12, 10),
+        Effect(android.R.drawable.btn_star_big_on, "Эффект14",        13, 10),
+    )
     // Контейнер для элемента списка, который хранит ссылку на свой view
     class ListHolder(item: View): RecyclerView.ViewHolder(item) {
         private val itemBinding = EffectItemBinding.bind(item) // Ссылка на главный элемент разметки списка

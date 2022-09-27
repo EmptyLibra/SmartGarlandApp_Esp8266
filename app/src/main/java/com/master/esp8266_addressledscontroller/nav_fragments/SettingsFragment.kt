@@ -7,11 +7,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.master.esp8266_addressledscontroller.R
+import androidx.recyclerview.widget.GridLayoutManager
 import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import okhttp3.OkHttpClient
@@ -30,6 +31,8 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
     private var prevColor : Int = 0
     private var curTime  = System.currentTimeMillis()
 
+    var curEffectIndex = 0 // Индекс текущего эффекта
+
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables", "SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -41,14 +44,26 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
         pref = activity?.getSharedPreferences("MyPref", AppCompatActivity.MODE_PRIVATE)!!
         isNeedSColorListener = false
 
+
         colorPickerViewOnClickListener()  // Обработчик нажатий цветового круга
         connectSwitchOnClickListener()    // Обработчик переключателя состояния гирлянды
 
         //----------- Обработчики нажатий кнопок -----------
         binding.apply {
+            tvEffectDelay.text = "Задержка эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
+
             // Настраиваем список эффектов
-            effectsList.layoutManager = LinearLayoutManager(this@SettingsFragment.context)
+            effectsList.layoutManager = GridLayoutManager(this@SettingsFragment.context, 2)
             effectsList.adapter = EffectsListAdapter(this@SettingsFragment) // Адаптер для списка с эффектами
+            seekBarEffectDelay.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                    tvEffectDelay.text = "Задержка эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
+                }
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    post("cmd?setCurEffectDelayMs=${seekBarEffectDelay.progress}")
+                }
+            })
         }
 
         return binding.root
@@ -74,6 +89,8 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
 
     // Обработчик нажатий на элементы списка с эффектами
     override fun effectListOnItemClick(effect: Effect) =with(binding) {
+        curEffectIndex = effect.index
+        seekBarEffectDelay.progress =  effect.standartDelay
         if(switchConnect.isChecked) {
             post("effect?ef=mode${effect.index}") // Запуск эффекта
 
