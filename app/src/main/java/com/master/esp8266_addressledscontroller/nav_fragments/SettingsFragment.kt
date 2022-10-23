@@ -4,9 +4,7 @@ import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
@@ -14,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
+import com.skydoves.colorpickerview.ColorPickerDialog
+import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,12 +26,16 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
     private lateinit var pref: SharedPreferences        // Класс для сохранения значений (при закрытии приложения)
     private val ip: String = "192.168.1.17"
 
+    private lateinit var colorPickerBuilder : ColorPickerDialog.Builder
+    private var colorPickerDialog : ColorPickerView? = null
+    private var colorPickerColor : Int = 0
+
     private var isNeedSwitchListener : Boolean = true
-    private var isNeedSColorListener : Boolean = true
+    private var isNeedSColorListener : Int = 2
     private var prevColor : Int = 0
     private var curTime  = System.currentTimeMillis()
 
-    var curEffectIndex = 0 // Индекс текущего эффекта
+    private var curEffectIndex = 0 // Индекс текущего эффекта
 
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables", "SetTextI18n")
     override fun onCreateView(
@@ -42,10 +46,8 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
 
         //
         pref = activity?.getSharedPreferences("MyPref", AppCompatActivity.MODE_PRIVATE)!!
-        isNeedSColorListener = false
+        isNeedSColorListener = 2
 
-
-        colorPickerViewOnClickListener()  // Обработчик нажатий цветового круга
         connectSwitchOnClickListener()    // Обработчик переключателя состояния гирлянды
 
         //----------- Обработчики нажатий кнопок -----------
@@ -61,7 +63,11 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
-                    post("cmd?setCurEffectDelayMs=${seekBarEffectDelay.progress}")
+                    if(switchConnect.isChecked) {
+                        post("cmd?setCurEffectDelayMs=${seekBarEffectDelay.progress}")
+                    } else {
+                        Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
+                    }
                 }
             })
         }
@@ -90,7 +96,7 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
     // Обработчик нажатий на элементы списка с эффектами
     override fun effectListOnItemClick(effect: Effect) =with(binding) {
         curEffectIndex = effect.index
-        seekBarEffectDelay.progress =  effect.standartDelay
+        seekBarEffectDelay.progress =  effect.standardDelay
         if(switchConnect.isChecked) {
             post("effect?ef=mode${effect.index}") // Запуск эффекта
 
@@ -99,32 +105,39 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
         }
     }
 
-    // Установка обработчика нажатий цветового круга
+    // Создание диалогового окна с выбором цвета
     @SuppressLint("SetTextI18n")
-    private fun colorPickerViewOnClickListener() =with(binding){
-        //----------- Цветовой круг ----------
-        // Привязка ползунка яркости к кругу
-        colorPickerWheel.attachBrightnessSlider(brightnessSlideBar)
+    fun createColorPickerDialog() = with(binding) {
+        isNeedSColorListener = 2
 
-        // Обработчик нажатий для Цветового круга
-        colorPickerWheel.setColorListener(ColorEnvelopeListener { envelope, _ ->
-            tvColor.text =
-                "Red:${envelope.argb[1]}, Green: ${envelope.argb[2]}, Blue: ${envelope.argb[3]}\nЦвет: #${envelope.hexCode}"
-            tvColor.setTextColor(envelope.color)
+        // Создание сброрщика для View
+        colorPickerBuilder = ColorPickerDialog.Builder(this@SettingsFragment.context)
+            .setTitle("Выберите цвет и яркость")
+            .setPositiveButton("Ок") { dialogInterface, _ -> dialogInterface.dismiss() }
+            .attachAlphaSlideBar(false)
+            .attachBrightnessSlideBar(true) // the default value is true.
+            .setBottomSpace(12) // set a bottom space between the last slide bar and buttons.
 
-            if (!isNeedSColorListener) {
-                isNeedSColorListener = true
+        // Получаем сам view и устанавливаем цвет
+        colorPickerDialog = colorPickerBuilder.colorPickerView
+        colorPickerDialog?.setInitialColor(colorPickerColor)
+
+        // Устанавливаем слушатель нажатий на цветовой круг
+        colorPickerDialog?.setColorListener(ColorEnvelopeListener { envelope, _ ->
+            if (isNeedSColorListener != 0) {
+                isNeedSColorListener--
                 return@ColorEnvelopeListener
             }
             if(tvConnectStatus.text == "Статус: подключено!" && switchConnect.isChecked) {
                 if ((prevColor != envelope.color) && (System.currentTimeMillis() - curTime > 100)) {
                     curTime  = System.currentTimeMillis()
                     prevColor = envelope.color
-                    post("setBaseColor?color=${colorPickerWheel.colorEnvelope.hexCode}")
+                    post("setBaseColor?color=${envelope.hexCode}")
                 }
             }
         })
-    }
+        colorPickerBuilder.show()
+    }!!
 
     // Установка обработчика переключателя состояния гирлянды
     private fun connectSwitchOnClickListener() = with(binding){
@@ -163,7 +176,7 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
 
     // Отправка команды на Esp и приём от неё ответа вида http://<destination_ip>/<command>?<param>=<value>
     @SuppressLint("SetTextI18n")
-    fun post(command: String) = with(binding){
+    private fun post(command: String) = with(binding){
 
         // Отправляем запрос в отдельном потоке, т.к. это затратная операция
         Thread {
@@ -201,19 +214,18 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
 
                                     // Установка цвета гирлянды
                                     "color" -> {
-                                        isNeedSColorListener = false
-                                        colorPickerWheel.selectByHsvColor(arr[1].toInt(16))
-                                        tvColor.text = "Red:${colorPickerWheel.colorEnvelope.argb[1]}, " +
-                                                "Green: ${colorPickerWheel.colorEnvelope.argb[2]}, " +
-                                                "Blue: ${colorPickerWheel.colorEnvelope.argb[3]}\n" +
-                                                "Цвет: #${colorPickerWheel.colorEnvelope.hexCode}"
-                                        tvColor.setTextColor(colorPickerWheel.colorEnvelope.color)
+                                        isNeedSColorListener++
+                                        colorPickerColor = arr[1].toInt(16)
                                     }
                                 }
                             }
+                        } else if(command.contains("setBaseColor") && resultText != null) {
+                            if(colorPickerDialog != null)
+                                colorPickerColor = colorPickerDialog!!.color
                         }
                     }
                 } else {
+                    //------ Нет ответа от МК ------
                     activity?.runOnUiThread {
                         tvConnectStatus.text = "Статус: не отвечает!"
                         if(command.contains("setState")) {
@@ -226,6 +238,7 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                     Log.d("MY_LOGS", "Esp: NO ANSWER!")
                 }
             } catch(i: IOException){
+                //------ Возникло исключение при отправке ------
                 activity?.runOnUiThread {
                     tvConnectStatus.text = "Статус: не отвечает!"
                     if(command.contains("setState")) {

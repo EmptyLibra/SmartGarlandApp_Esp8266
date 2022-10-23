@@ -54,4 +54,7 @@ dependencies {
 
     // Color picker
     implementation 'com.github.skydoves:colorpickerview:2.2.4'
+
+    // Корутины
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 }

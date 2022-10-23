@@ -10,12 +10,11 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/content_main"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.fragment.app.FragmentContainerView>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nv_menu"

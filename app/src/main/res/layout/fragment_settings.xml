@@ -47,54 +47,6 @@
             app:layout_constraintStart_toStartOf="@+id/tvConnectStatus"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/linearLayoutCompat"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="124dp"
-            android:layout_marginEnd="8dp"
-            android:orientation="vertical"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/tvColor"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Red: 0, Green: 0, Blue: 0}\nЦвет: #00000000"
-                android:textAlignment="center" />
-
-            <com.skydoves.colorpickerview.ColorPickerView
-                android:id="@+id/colorPickerWheel"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_gravity="center"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                app:initialColor="@color/white"
-                app:debounceDuration="15"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="Яркость" />
-
-            <com.skydoves.colorpickerview.sliders.BrightnessSlideBar
-                android:id="@+id/brightnessSlideBar"
-                android:layout_width="200dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginRight="10dp"
-                android:layout_marginBottom="10dp"
-                app:borderColor_BrightnessSlider="@color/purple_700"
-                app:selector_BrightnessSlider="@drawable/wheel">
-
-            </com.skydoves.colorpickerview.sliders.BrightnessSlideBar>
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
         <TextView
             android:id="@+id/tvState"
             android:layout_width="wrap_content"
@@ -109,11 +61,13 @@
 
         <SeekBar
             android:id="@+id/seekBarEffectDelay"
-            android:layout_width="100dp"
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:progress="50"
             android:max="200"
+            android:minHeight="40dp"
+            android:maxHeight="50dp"
             app:layout_constraintEnd_toEndOf="@+id/tvEffectDelay"
             app:layout_constraintStart_toStartOf="@+id/tvEffectDelay"
             app:layout_constraintTop_toBottomOf="@+id/tvEffectDelay" />

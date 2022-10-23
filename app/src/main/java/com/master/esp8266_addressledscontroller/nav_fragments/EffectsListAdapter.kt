@@ -8,7 +8,7 @@ import com.master.esp8266_addressledscontroller.R
 import com.master.esp8266_addressledscontroller.databinding.EffectItemBinding
 
 // Класс-модель для одного эффекта (хранит данные эффекта
-data class Effect(val imageId: Int, val name: String, val index: Int, val standartDelay: Int)
+data class Effect(val imageId: Int, val name: String, val index: Int, val standardDelay: Int)
 
 // Адаптер, заполняющий список
 class EffectsListAdapter(private val listener: Listener): RecyclerView.Adapter<EffectsListAdapter.ListHolder>() {

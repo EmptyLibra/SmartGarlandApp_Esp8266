@@ -1,14 +1,11 @@
 package com.master.esp8266_addressledscontroller.nav_fragments
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
-import com.master.esp8266_addressledscontroller.R
+import androidx.fragment.app.Fragment
 import com.master.esp8266_addressledscontroller.databinding.FragmentDrawingBinding
-import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
 
 class DrawingFragment : Fragment() {
     private lateinit var binding: FragmentDrawingBinding
@@ -16,7 +13,7 @@ class DrawingFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentDrawingBinding.inflate(inflater, container, false)
 
         return binding.root
