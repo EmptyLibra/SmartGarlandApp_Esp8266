@@ -28,10 +28,6 @@
     <item android:title="Прочее">
         <menu>
             <item
-                android:id="@+id/nav_for_developer"
-                android:icon="@drawable/ic_nav_menu_for_developer"
-                android:title="Для разарботчика"/>
-            <item
                 android:id="@+id/nav_about_app"
                 android:icon="@android:drawable/ic_menu_help"
                 android:title="О приложении" />
