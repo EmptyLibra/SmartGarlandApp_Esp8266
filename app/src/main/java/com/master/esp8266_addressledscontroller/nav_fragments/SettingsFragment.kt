@@ -64,6 +64,15 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
 
         //----------- Обработчики нажатий кнопок -----------
         binding.apply {
+            checkBoxAutoChangeEffects.setOnClickListener{
+                if(editTextTextOneEffectTime.text.isEmpty()) {
+                    post("cmd?setAutoChangeEffects=${( if(checkBoxAutoChangeEffects.isChecked) "1" else "0")}&setAutoCahngeEffectsMaxTime=${60000U}")
+                }else {
+                    val delayTime: Int = editTextTextOneEffectTime.text.toString().toInt()
+                    post("cmd?setAutoChangeEffects=${( if(checkBoxAutoChangeEffects.isChecked) "1" else "0")}&setAutoCahngeEffectsMaxTime=${delayTime}")
+                }
+
+            }
 
             // Нажатие на кнопку отправки бегущей строки
             sendRunStr.setOnClickListener {
