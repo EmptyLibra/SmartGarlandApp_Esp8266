@@ -69,7 +69,7 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                     post("cmd?setAutoChangeEffects=${( if(checkBoxAutoChangeEffects.isChecked) "1" else "0")}&setAutoCahngeEffectsMaxTime=${60000U}")
                 }else {
                     val delayTime: Int = editTextTextOneEffectTime.text.toString().toInt()
-                    post("cmd?setAutoChangeEffects=${( if(checkBoxAutoChangeEffects.isChecked) "1" else "0")}&setAutoCahngeEffectsMaxTime=${delayTime}")
+                    post("cmd?setAutoChangeEffects=${( if(checkBoxAutoChangeEffects.isChecked) "1" else "0")}&setAutoCahngeEffectsMaxTime=${delayTime*1000}")
                 }
 
             }

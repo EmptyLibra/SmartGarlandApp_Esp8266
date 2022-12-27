@@ -91,6 +91,8 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d("MY_LOGS", "Method: onCreate()")
 
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
