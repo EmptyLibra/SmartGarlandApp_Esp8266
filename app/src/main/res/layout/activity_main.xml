@@ -14,7 +14,7 @@
         android:id="@+id/content_main"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:layout="@layout/fragment_settings">
+        tools:layout="@layout/fragment_effects">
     </androidx.fragment.app.FragmentContainerView>
 
     <com.google.android.material.navigation.NavigationView

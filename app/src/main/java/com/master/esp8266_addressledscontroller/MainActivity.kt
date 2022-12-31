@@ -5,21 +5,21 @@ import android.app.Dialog
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.text.Html
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.HtmlCompat
 import androidx.core.view.GravityCompat
 import com.master.esp8266_addressledscontroller.databinding.ActivityMainBinding
 import com.master.esp8266_addressledscontroller.nav_fragments.DrawingFragment
-import com.master.esp8266_addressledscontroller.nav_fragments.SettingsFragment
+import com.master.esp8266_addressledscontroller.nav_fragments.EffectsFragment
+import java.time.LocalTime
 
 
 /* Для связи с МК по wi-fi надо:
@@ -37,7 +37,7 @@ import com.master.esp8266_addressledscontroller.nav_fragments.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
     private lateinit var  mainBinding: ActivityMainBinding  // Класс привязки к xml файлу
-    var logList = mutableListOf<LogElement>()
+    private val dataModel: MainActivityViewModel by viewModels()
 
     // Функция создания активности (вызывается при её создании)
     @RequiresApi(Build.VERSION_CODES.O)
@@ -48,9 +48,12 @@ class MainActivity : AppCompatActivity() {
         mainBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(mainBinding.root)
 
+        // Инициализация списка с отладочной информацией (иначе первые две записи не добавляюся)
+        dataModel.initLogList()
+
         // Куда поместить новый фрагмент
         if(savedInstanceState == null) {
-            supportFragmentManager.beginTransaction().add(R.id.content_main, SettingsFragment.newInstance(), "Settings fragment").commit()
+            supportFragmentManager.beginTransaction().add(R.id.content_main, EffectsFragment.newInstance(), "Settings fragment").commit()
         }
 
         // ToolBar
@@ -67,7 +70,7 @@ class MainActivity : AppCompatActivity() {
 
                         // Запуск нового фрагмента
                         supportFragmentManager.beginTransaction().replace(R.id.content_main,
-                            SettingsFragment.newInstance(), "Settings fragment").commit()
+                            EffectsFragment.newInstance(), "Settings fragment").commit()
                     }
                     R.id.nav_draw -> {
                         supportActionBar?.title = "Рисовалка"
@@ -89,10 +92,6 @@ class MainActivity : AppCompatActivity() {
                 true
             }
         }
-        Log.d("MY_LOGS", "Method: onCreate()")
-
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -116,7 +115,7 @@ class MainActivity : AppCompatActivity() {
             R.id.change_color -> {
                 // Запуск окна с выбором цвета
                 val settingsFrag = supportFragmentManager.findFragmentById(R.id.content_main)
-                if(settingsFrag is SettingsFragment) // Пока что это костыль !!!!!!!!!!!!!!!!!
+                if(settingsFrag is EffectsFragment) // Пока что это костыль !!!!!!!!!!!!!!!!!
                     settingsFrag.createColorPickerDialog()
             }
             R.id.logs -> {
@@ -127,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                 val textView = diaLogs.findViewById<TextView>(R.id.textViewLogs)
                 textView.movementMethod = ScrollingMovementMethod()
                 var text = ""
-                for(elem in logList) {
+                for(elem in dataModel.logList.value!!) {
                     text += elem.toString()
                 }
                 textView.text = HtmlCompat.fromHtml(text, HtmlCompat.FROM_HTML_MODE_LEGACY)

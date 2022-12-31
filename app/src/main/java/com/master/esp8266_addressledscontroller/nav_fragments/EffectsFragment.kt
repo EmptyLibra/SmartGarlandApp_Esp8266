@@ -2,10 +2,11 @@ package com.master.esp8266_addressledscontroller.nav_fragments
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
@@ -13,11 +14,13 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.master.esp8266_addressledscontroller.LogElement
 import com.master.esp8266_addressledscontroller.LogTypes
 import com.master.esp8266_addressledscontroller.MainActivity
-import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
+import com.master.esp8266_addressledscontroller.MainActivityViewModel
+import com.master.esp8266_addressledscontroller.databinding.FragmentEffectsBinding
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.ColorPickerView
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
@@ -27,12 +30,12 @@ import java.io.IOException
 import java.time.LocalTime
 
 @RequiresApi(Build.VERSION_CODES.O)
-class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
-    private lateinit var  request: Request              // Класс для формирования http запросов
-    private lateinit var binding: FragmentSettingsBinding
-    private val client = OkHttpClient()
-    private lateinit var pref: SharedPreferences        // Класс для сохранения значений (при закрытии приложения)
-    private val ip: String = "192.168.1.17"
+class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
+
+    // http данные
+    private val client = OkHttpClient()                      // Объект клиента
+    private val httpAddress: String = "http://192.168.1.17/" // Http адрес, на который посылаются команды
+    lateinit var request: Request                            // Пришедший ответ от контроллера
 
     private lateinit var colorPickerBuilder : ColorPickerDialog.Builder
     private var colorPickerDialog : ColorPickerView? = null
@@ -45,25 +48,39 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
 
     private var curEffectIndex = 0 // Индекс текущего эффекта
 
-    private lateinit var mainActivity: MainActivity
+    // ViewModel главной активности
+    private val mainViewModel: MainActivityViewModel by activityViewModels()
 
+    companion object{
+        @SuppressLint("StaticFieldLeak")
+        lateinit var effectFragmentBinding: FragmentEffectsBinding
+
+        @JvmStatic
+        fun newInstance() = EffectsFragment()
+    }
+
+    /*###################### Методы цикла жизни фрагмента ############################*/
     @SuppressLint("ClickableViewAccessibility", "UseCompatLoadingForDrawables", "SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        effectFragmentBinding = FragmentEffectsBinding.inflate(inflater, container, false)
 
-        mainActivity = activity as MainActivity
-
-        //
-        pref = activity?.getSharedPreferences("MyPref", AppCompatActivity.MODE_PRIVATE)!!
         isNeedSColorListener = 2
 
         connectSwitchOnClickListener()    // Обработчик переключателя состояния гирлянды
 
         //----------- Обработчики нажатий кнопок -----------
-        binding.apply {
+        effectFragmentBinding.apply {
+            testButton.setOnClickListener{
+                val intent = Intent(Intent.ACTION_VIEW);
+                intent.data = Uri.parse("https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases/download/v1.0.0-alpha/app-debug.apk")
+                startActivity(intent)
+                // Toast.makeText(this@EffectsFragment.context, "${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
+                // переходим на https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases и ищем строки, начинающиеся с https и заканчивающиеся на .apk (проверяем первую найденую строку)
+                // протестить на https://github.com/mozilla-mobile/fenix/releases
+            }
             checkBoxAutoChangeEffects.setOnClickListener{
                 if(editTextTextOneEffectTime.text.isEmpty()) {
                     post("cmd?setAutoChangeEffects=${( if(checkBoxAutoChangeEffects.isChecked) "1" else "0")}&setAutoCahngeEffectsMaxTime=${60000U}")
@@ -80,19 +97,19 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                     if(switchConnect.isChecked) {
                         post("effect?ef=mode${10}&str=${editTextRunningStr.text}&isRainbow=${if(chBoxRainbowStr.isChecked) "1" else "0"}");
                     } else {
-                        Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EffectsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
                     }
 
                 } else {
-                    Toast.makeText(this@SettingsFragment.context, "Текстовое поле пусто\nВведите текст!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EffectsFragment.context, "Текстовое поле пусто\nВведите текст!", Toast.LENGTH_SHORT).show()
                 }
             }
 
             tvEffectDelay.text = "Задержка эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
 
             // Настраиваем список эффектов
-            effectsList.layoutManager = GridLayoutManager(this@SettingsFragment.context, 2)
-            effectsList.adapter = EffectsListAdapter(this@SettingsFragment) // Адаптер для списка с эффектами
+            effectsList.layoutManager = GridLayoutManager(this@EffectsFragment.context, 2)
+            effectsList.adapter = EffectsListAdapter(this@EffectsFragment) // Адаптер для списка с эффектами
             seekBarEffectDelay.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
                     tvEffectDelay.text = "Задержка эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
@@ -102,19 +119,20 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                     if(switchConnect.isChecked) {
                         post("cmd?setCurEffectDelayMs=${seekBarEffectDelay.progress}")
                     } else {
-                        Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EffectsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
                     }
                 }
             })
         }
 
-        return binding.root
+        return effectFragmentBinding.root
     }
+
+    // OnViewCreated ???
 
     // Загрузка всех данных
     override fun onResume() {
         super.onResume()
-        getFragmentData()
         post( "cmd?getAllConfig=1")
     }
 
@@ -124,13 +142,9 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
         post( "cmd?saveAllConfig=1")
     }
 
-    companion object{
-        @JvmStatic
-        fun newInstance() = SettingsFragment()
-    }
-
+    /*###################### Методы обработки нажатий ############################*/
     // Обработчик нажатий на элементы списка с эффектами
-    override fun effectListOnItemClick(effect: Effect) =with(binding) {
+    override fun effectListOnItemClick(effect: Effect) =with(effectFragmentBinding) {
         curEffectIndex = effect.index
         seekBarEffectDelay.progress =  effect.standardDelay
         if(switchConnect.isChecked) {
@@ -138,17 +152,17 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
             post("effect?ef=mode${effect.index}")              // Запуск эффекта
 
         }  else if(tvConnectStatus.text != "Статус: не отвечает!"){
-            Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@EffectsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
         }
     }
 
     // Создание диалогового окна с выбором цвета
     @SuppressLint("SetTextI18n")
-    fun createColorPickerDialog() = with(binding) {
+    fun createColorPickerDialog() = with(effectFragmentBinding) {
         isNeedSColorListener = 2
 
         // Создание сброрщика для View
-        colorPickerBuilder = ColorPickerDialog.Builder(this@SettingsFragment.context)
+        colorPickerBuilder = ColorPickerDialog.Builder(this@EffectsFragment.context)
             .setTitle("Выберите цвет и яркость")
             .setPositiveButton("Ок") { dialogInterface, _ -> dialogInterface.dismiss() }
             .attachAlphaSlideBar(false)
@@ -177,7 +191,7 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
     }!!
 
     // Установка обработчика переключателя состояния гирлянды
-    private fun connectSwitchOnClickListener() = with(binding){
+    private fun connectSwitchOnClickListener() = with(effectFragmentBinding){
         //----------- Обработчик наждатий на ползунок состояния ----------
         switchConnect.setOnCheckedChangeListener { _, isChecked ->
             if(!isNeedSwitchListener) {
@@ -196,32 +210,16 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
         }
     }
 
-    /* Сохраняем все данные фрагмента
-    private fun saveFragmentData() =with(binding){
-        val editor = pref.edit()
-        editor.putString("answer", tvState.text.toString())
-
-        //colorPickerWheel.setLifecycleOwner(this@SettingsFragment)
-        editor.apply()
-    } */
-
-    // Получаем все данные фрагмента
-    private fun getFragmentData() = with(binding) {
-        val data = pref.getString("answer", "")
-        //if(data != null && data.isNotEmpty()) { tvState.text = data }
-    }
-
     // Отправка команды на Esp и приём от неё ответа вида http://<destination_ip>/<command>?<param>=<value>
     @RequiresApi(Build.VERSION_CODES.O)
     @SuppressLint("SetTextI18n")
-    private fun post(command: String) = with(binding){
-
+    private fun post(command: String) = with(effectFragmentBinding){
         // Отправляем запрос в отдельном потоке, т.к. это затратная операция
         Thread {
             // Формируем запрос вида: http://<destination_ip>/<command>?<param>=<value>
-            request = Request.Builder().url("http://$ip/$command").build()
-            Log.d("MY_LOGS", "Android: ${request.url()}")
-            mainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ANDROID_SEND, "Android: ${request.url()}"))
+            request = Request.Builder().url(httpAddress + command).build()
+            android.util.Log.d("MY_LOGS", "Android: ${request.url()}")
+            mainViewModel.addLog(LogElement(LocalTime.now(), LogTypes.ANDROID_SEND, "Android: ${request.url()}"))
 
             activity?.runOnUiThread {
                 tvConnectStatus.text = "Статус: Ожидаем ответа..."
@@ -233,8 +231,8 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                 if(response.isSuccessful) {
                     // Получаем ответ
                     val resultText = response.body()?.string()
-                    Log.d("MY_LOGS", "Esp: $resultText")
-                    mainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ESP_ANSWER, "Esp: $resultText"))
+                    android.util.Log.d("MY_LOGS", "Esp: $resultText")
+                    mainViewModel.addLog(LogElement(LocalTime.now(), LogTypes.ESP_ANSWER, "Esp: $resultText"))
 
                     activity?.runOnUiThread{
                         tvConnectStatus.text = "Статус: подключено!"
@@ -276,10 +274,10 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                             switchConnect.text = "Отключена"
                             switchConnect.isChecked = !switchConnect.isChecked
                         }
-                        Toast.makeText(this@SettingsFragment.context, "Проверьте подключение к WiFi !", Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(this@EffectsFragment.context, "Проверьте подключение к WiFi !", android.widget.Toast.LENGTH_SHORT).show()
                     }
-                    Log.d("MY_LOGS", "Esp: NO ANSWER!")
-                    mainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ERROR, "Esp: NO ANSWER!"))
+                    android.util.Log.d("MY_LOGS", "Esp: NO ANSWER!")
+                    mainViewModel.addLog(LogElement(LocalTime.now(), LogTypes.ERROR, "Esp: NO ANSWER!"))
                 }
             } catch(i: IOException){
                 //------ Возникло исключение при отправке ------
@@ -290,10 +288,10 @@ class SettingsFragment : Fragment(), EffectsListAdapter.Listener {
                         switchConnect.text = "Отключена"
                         switchConnect.isChecked = !switchConnect.isChecked
                     }
-                    Toast.makeText(this@SettingsFragment.context, "Проверьте подключение к WiFi !", Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this@EffectsFragment.context, "Проверьте подключение к WiFi !", android.widget.Toast.LENGTH_SHORT).show()
                 }
-                Log.d("MY_LOGS", "EXCEPTION in get wi-fi answer!")
-                mainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ERROR, "EXCEPTION in get wi-fi answer!"))
+                android.util.Log.d("MY_LOGS", "EXCEPTION in get wi-fi answer!")
+                mainViewModel.addLog(LogElement(LocalTime.now(), LogTypes.ERROR, "EXCEPTION in get wi-fi answer!"))
             }
 
         }.start()
