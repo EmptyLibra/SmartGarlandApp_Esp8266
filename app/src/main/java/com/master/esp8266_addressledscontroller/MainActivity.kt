@@ -19,7 +19,6 @@ import androidx.core.view.GravityCompat
 import com.master.esp8266_addressledscontroller.databinding.ActivityMainBinding
 import com.master.esp8266_addressledscontroller.nav_fragments.DrawingFragment
 import com.master.esp8266_addressledscontroller.nav_fragments.EffectsFragment
-import java.time.LocalTime
 
 
 /* Для связи с МК по wi-fi надо:

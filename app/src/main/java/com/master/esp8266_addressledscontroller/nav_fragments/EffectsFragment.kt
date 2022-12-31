@@ -1,9 +1,7 @@
 package com.master.esp8266_addressledscontroller.nav_fragments
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -12,13 +10,11 @@ import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import com.master.esp8266_addressledscontroller.LogElement
 import com.master.esp8266_addressledscontroller.LogTypes
-import com.master.esp8266_addressledscontroller.MainActivity
 import com.master.esp8266_addressledscontroller.MainActivityViewModel
 import com.master.esp8266_addressledscontroller.databinding.FragmentEffectsBinding
 import com.skydoves.colorpickerview.ColorPickerDialog
@@ -35,7 +31,7 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
     // http данные
     private val client = OkHttpClient()                      // Объект клиента
     private val httpAddress: String = "http://192.168.1.17/" // Http адрес, на который посылаются команды
-    lateinit var request: Request                            // Пришедший ответ от контроллера
+    private lateinit var request: Request                    // Пришедший ответ от контроллера
 
     private lateinit var colorPickerBuilder : ColorPickerDialog.Builder
     private var colorPickerDialog : ColorPickerView? = null
@@ -74,7 +70,7 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
         //----------- Обработчики нажатий кнопок -----------
         effectFragmentBinding.apply {
             testButton.setOnClickListener{
-                val intent = Intent(Intent.ACTION_VIEW);
+                val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse("https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases/download/v1.0.0-alpha/app-debug.apk")
                 startActivity(intent)
                 // Toast.makeText(this@EffectsFragment.context, "${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
@@ -95,7 +91,7 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
             sendRunStr.setOnClickListener {
                 if (editTextRunningStr.text.isNotEmpty()) {
                     if(switchConnect.isChecked) {
-                        post("effect?ef=mode${10}&str=${editTextRunningStr.text}&isRainbow=${if(chBoxRainbowStr.isChecked) "1" else "0"}");
+                        post("effect?ef=mode${10}&str=${editTextRunningStr.text}&isRainbow=${if(chBoxRainbowStr.isChecked) "1" else "0"}")
                     } else {
                         Toast.makeText(this@EffectsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
                     }
@@ -274,7 +270,7 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
                             switchConnect.text = "Отключена"
                             switchConnect.isChecked = !switchConnect.isChecked
                         }
-                        android.widget.Toast.makeText(this@EffectsFragment.context, "Проверьте подключение к WiFi !", android.widget.Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@EffectsFragment.context, "Проверьте подключение к WiFi !", Toast.LENGTH_SHORT).show()
                     }
                     android.util.Log.d("MY_LOGS", "Esp: NO ANSWER!")
                     mainViewModel.addLog(LogElement(LocalTime.now(), LogTypes.ERROR, "Esp: NO ANSWER!"))
@@ -288,7 +284,7 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
                         switchConnect.text = "Отключена"
                         switchConnect.isChecked = !switchConnect.isChecked
                     }
-                    android.widget.Toast.makeText(this@EffectsFragment.context, "Проверьте подключение к WiFi !", android.widget.Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@EffectsFragment.context, "Проверьте подключение к WiFi !", Toast.LENGTH_SHORT).show()
                 }
                 android.util.Log.d("MY_LOGS", "EXCEPTION in get wi-fi answer!")
                 mainViewModel.addLog(LogElement(LocalTime.now(), LogTypes.ERROR, "EXCEPTION in get wi-fi answer!"))

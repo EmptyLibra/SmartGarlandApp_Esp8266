@@ -6,10 +6,14 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import java.time.LocalTime
 
+enum class ConnectStatus {
+    STATUS_NOT_CONNECT, STATUS_IN_PROGRESS, STATUS_CONNECT
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivityViewModel : ViewModel() {
-    // Логи с отладочной информацией
-    var logList = MutableLiveData<MutableList<LogElement>>()
+    var connectToMcuStatus = ConnectStatus.STATUS_NOT_CONNECT // Статус подключения к микроконтроллеру
+    var logList = MutableLiveData<MutableList<LogElement>>()  // Логи с отладочной информацией
 
     init{
         initLogList()
