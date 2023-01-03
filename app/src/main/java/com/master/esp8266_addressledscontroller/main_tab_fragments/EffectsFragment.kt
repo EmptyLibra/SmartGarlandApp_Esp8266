@@ -23,9 +23,6 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
 
     private val httpHandler = HttpHandler.newInstance()
 
-    // Данные эффектов
-    private var curEffectIndex = 0 // Индекс текущего эффекта
-
     companion object{
         // Экземпляр фрагмента создастся только один раз, а дальше будет браться уже существующий
         @JvmStatic
@@ -68,7 +65,7 @@ class EffectsFragment : Fragment(), EffectsListAdapter.Listener {
     // Обработчик нажатий на элементы списка с эффектами
     override fun effectListOnItemClick(effect: Effect) =with(effectFragmentBinding) {
         Log.d("MY_LOGS", "Click on Effect Item")
-        curEffectIndex = effect.index
+        mainViewModel.stripConfig.curEffectIndex.value = effect.index
         if(mainViewModel.stripConfig.state.value == State.ENABLE) {
             //post("cmd?getEffectDelayMs=${effect.systemName}") // Получаем задержку эффекта, устанавливаем её в slider
             httpHandler.post("${McuCommand.CHANGE_EFFECT.command}?ef=mode${effect.index}")              // Запуск эффекта

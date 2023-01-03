@@ -1,18 +1,28 @@
 package com.master.esp8266_addressledscontroller.main_tab_fragments
 
+import android.R.id.text1
+import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.master.esp8266_addressledscontroller.*
 import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.URL
+import java.net.URLConnection
 
 
 class SettingsFragment : Fragment() {
@@ -32,6 +42,7 @@ class SettingsFragment : Fragment() {
     }
 
     /*###################### Методы цикла жизни фрагмента ############################*/
+    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -46,53 +57,57 @@ class SettingsFragment : Fragment() {
         observeAutoModeState()      // Наблюдатель за состоянием авто-смены эффектов
 
         /*====================== Обработчики нажатий =========================*/
-        // Обработчик переключателя состояния гирлянды
-        connectSwitchOnClickListener()
+        setSwitchConnectOnClickListener()     // Для переключателя состояния гирлянды
+        setRadioButtonsOnClickListener()      // Для радио-кнопок авто-режима
+        setButtonSendRunStrOnClickListener()  // Для кнопки отправки бегущей строки
+        setSeekBarEffectSpeedListener()       // Для ползунка скорости эффекта
 
-        radioButtonsOnClickListener()
-
-        fragMainBinding.apply {
-            testButton.setOnClickListener{
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse("https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases/download/v1.0.0-alpha/app-debug.apk")
-                startActivity(intent)
-                // Toast.makeText(this@EffectsFragment.context, "${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
-                // переходим на https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases и ищем строки, начинающиеся с https и заканчивающиеся на .apk (проверяем первую найденую строку)
-                // протестить на https://github.com/mozilla-mobile/fenix/releases
-            }
-
-
-            // Нажатие на кнопку отправки бегущей строки
-            sendRunStr.setOnClickListener {
-                if (editTextRunningStr.text.isNotEmpty()) {
-                    if(mainViewModel.stripConfig.state.value == State.ENABLE) {
-                        httpHandler.post("${McuCommand.CHANGE_EFFECT.command}?ef=mode${10}&str=${editTextRunningStr.text}&isRainbow=${if(chBoxRainbowStr.isChecked) "1" else "0"}")
-                    } else {
-                        Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
-                    }
-
-                } else {
-                    Toast.makeText(this@SettingsFragment.context, "Текстовое поле пусто\nВведите текст!", Toast.LENGTH_SHORT).show()
+        fragMainBinding.testButton.setOnClickListener{
+            Thread {
+                try {
+                    val url = URL("https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases")
+                    val con1: URLConnection = url.openConnection()
+                    val reader = BufferedReader(InputStreamReader(con1.getInputStream()))
+                    Log.d("MY_LOGS", reader.readText())
+                    //Log.d("MY_LOGS", Regex("""https://.*.apk""").find(reader.readText()).toString())
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
-            }
+            }.start()
 
-            var tempString = "Скорость эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
-            tvEffectDelay.text = tempString
+            val textView = TextView(activity)
+            textView.text = "Доступна новая версия приложения!"
+            textView.gravity = Gravity.CENTER
+            textView.textSize = 20.0F
 
-            seekBarEffectDelay.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
-                    tempString = "Скорость эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
-                    tvEffectDelay.text = tempString
+            val message ="Новая версия: v6.6.6\n" +
+                    "Текущая версия: ${BuildConfig.VERSION_NAME}\n" +
+                    "Хотите обновить приложение?"
+
+            val dialog = AlertDialog.Builder(it.context)
+                .setCustomTitle(textView)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("Да") { dialog, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data =
+                        Uri.parse("https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases/download/v1.0.0-alpha/app-debug.apk")
+                    startActivity(intent)
+                    dialog.dismiss()
                 }
-                override fun onStartTrackingTouch(seekBar: SeekBar) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar) {
-                    if(mainViewModel.stripConfig.state.value == State.ENABLE) {
-                        httpHandler.post("cmd?${McuCommand.SET_CUR_EFFECT_DELAY_MS.command}=${seekBarEffectDelay.progress}")
-                    } else {
-                        Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
-                    }
+                .setNegativeButton("Позже") { dialog, _ ->
+                    dialog.cancel()
                 }
-            })
+                .create()
+            dialog.show()
+
+            val parent = dialog.getButton(AlertDialog.BUTTON_NEGATIVE).parent as LinearLayout
+            parent.gravity = Gravity.CENTER_HORIZONTAL
+            val leftSpacer = parent.getChildAt(1)
+            leftSpacer.visibility = View.GONE
+            // Toast.makeText(this@EffectsFragment.context, "${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
+            // переходим на https://github.com/EmptyLibra/SmartGirlandApp_Esp8266/releases и ищем строки, начинающиеся с https и заканчивающиеся на .apk (проверяем первую найденую строку)
+            // протестить на https://github.com/mozilla-mobile/fenix/releases
         }
 
         return fragMainBinding.root
@@ -111,8 +126,8 @@ class SettingsFragment : Fragment() {
     }
 
     /*###################### Обработчики нажатий ############################*/
-    // Установка обработчика переключателя состояния гирлянды
-    private fun connectSwitchOnClickListener() = with(fragMainBinding){
+    // Назначение слушателя нажатий для переключателя состояния гирлянды
+    private fun setSwitchConnectOnClickListener() = with(fragMainBinding){
         switchConnect.setOnCheckedChangeListener { _, isChecked ->
             Log.d("MY_LOGS", " Switch check!!")
             if(MainActivity.connectToMcuStatus.value == ConnectStatus.IN_PROGRESS) {
@@ -125,7 +140,8 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun radioButtonsOnClickListener() =with(fragMainBinding){
+    // Назначение слушателя нажатий для радио-кнопок авторежим
+    private fun setRadioButtonsOnClickListener() =with(fragMainBinding){
         radioGroup.setOnCheckedChangeListener{ _, _ ->
             if(MainActivity.connectToMcuStatus.value == ConnectStatus.IN_PROGRESS) {
                 when(radioGroup.checkedRadioButtonId) {
@@ -149,6 +165,43 @@ class SettingsFragment : Fragment() {
                         "&setAutoCahngeEffectsMaxTime=${delayTime * 1000}")
             }
         }
+    }
+
+    // Установка слушателя нажатий для кнопки отправки бегущей строки
+    private fun setButtonSendRunStrOnClickListener() =with(fragMainBinding){
+        sendRunStr.setOnClickListener {
+            if (editTextRunningStr.text.isNotEmpty()) {
+                if(mainViewModel.stripConfig.state.value == State.ENABLE) {
+                    httpHandler.post("${McuCommand.CHANGE_EFFECT.command}?ef=mode${10}&str=${editTextRunningStr.text}&isRainbow=${if(chBoxRainbowStr.isChecked) "1" else "0"}")
+                } else {
+                    Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
+                }
+
+            } else {
+                Toast.makeText(this@SettingsFragment.context, "Текстовое поле пусто\nВведите текст!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Установка слушателя нажатий для ползунка, отвечающего за скорость эффекта
+    private fun setSeekBarEffectSpeedListener() =with(fragMainBinding){
+        var tempString = "Скорость эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
+        tvEffectDelay.text = tempString
+
+        seekBarEffectDelay.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {
+                tempString = "Скорость эффекта:\n" + seekBarEffectDelay.progress.toString() + "мс"
+                tvEffectDelay.text = tempString
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                if(mainViewModel.stripConfig.state.value == State.ENABLE) {
+                    httpHandler.post("cmd?${McuCommand.SET_CUR_EFFECT_DELAY_MS.command}=${seekBarEffectDelay.progress}")
+                } else {
+                    Toast.makeText(this@SettingsFragment.context, "Лента выключена!", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
     }
 
     /*###################### Наблюдатели за состояниями переменных ############################*/
@@ -203,6 +256,7 @@ class SettingsFragment : Fragment() {
     }
 
     /*==================== Вспомогательные функции =========================*/
+    // Переключить обратко radioButtons, ответственные за авто-режим
     private fun toggleRadioButtons() = with(fragMainBinding){
         Log.d("MY_LOGS", " Toggle radioButons!")
         radioGroup.setOnCheckedChangeListener(null)
@@ -210,14 +264,15 @@ class SettingsFragment : Fragment() {
             radioButtonAutoChangeDis.id -> radioGroup.check(radioButtonAutoChangeEn.id)
             radioButtonAutoChangeEn.id -> radioGroup.check(radioButtonAutoChangeDis.id)
         }
-        radioButtonsOnClickListener()
+        setRadioButtonsOnClickListener()
     }
 
+    // Переключить обратко switch, ответственный за состояние ленты
     private fun toggleSwitchConnect() = with(fragMainBinding){
         Log.d("MY_LOGS", " Toggle switch connect!")
         switchConnect.setOnCheckedChangeListener(null)
         switchConnect.isChecked = !switchConnect.isChecked
         switchConnect.text = if(switchConnect.isChecked) "Выключить" else "Включить"
-        connectSwitchOnClickListener()
+        setSwitchConnectOnClickListener()
     }
 }
