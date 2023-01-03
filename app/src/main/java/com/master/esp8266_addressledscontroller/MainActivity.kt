@@ -7,10 +7,12 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.PersistableBundle
+import android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -18,7 +20,9 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.HtmlCompat
 import androidx.core.view.GravityCompat
@@ -31,10 +35,12 @@ import com.master.esp8266_addressledscontroller.side_nav_fragments.DrawingFragme
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
 import java.net.URLConnection
 import java.time.LocalTime
+import java.util.regex.Pattern
 
 
 /* Список дел:
@@ -98,6 +104,7 @@ class MainActivity : AppCompatActivity() {
 
     /*###################### Методы жизненного цикла активности ############################*/
     // Функция создания активности (вызывается при её создании)
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -138,12 +145,7 @@ class MainActivity : AppCompatActivity() {
 
         // Проверка наличия обновления
         checkForUpdate()
-    }
-
-    // Сохранение всех данных перед уничтожением фрагмента
-    override fun onDestroy() {
-        super.onDestroy()
-        httpHandler.post( "cmd?${McuCommand.SAVE_ALL_CONFIG.command}=1")
+        deleteApkFiles()
     }
 
     // Сохранение данных при повороте экрана
@@ -277,7 +279,7 @@ class MainActivity : AppCompatActivity() {
 
         // Устанавливаем слушатель нажатий на цветовой круг
         colorPickerDialog?.setColorListener(ColorEnvelopeListener { envelope, _ ->
-            if(connectToMcuStatus.value == ConnectStatus.CONNECT && mainViewModel.stripConfig.state.value == State.ENABLE) {
+            if(connectToMcuStatus.value == ConnectStatus.CONNECT && mainViewModel.stripConfig.state.value == State.ENABLE && envelope.hexCode != "FFFFFFFF") {
                 if ((prevColorPickerColor != envelope.color) && (System.currentTimeMillis() - curTime > 100)) {
                     curTime  = System.currentTimeMillis()
                     prevColorPickerColor = envelope.color
@@ -301,17 +303,17 @@ class MainActivity : AppCompatActivity() {
                         McuCommand.SET_LED_STRIP_STATE.command -> mainViewModel.stripConfig.toggleStripState()
 
                         // Команда по установке состояния авто-смены эффектов не выполнена!
-                        McuCommand.SET_AUTO_CHANGE_EFFECT_MODE.command -> mainViewModel.stripConfig.toggleAutoModeState()
+                        McuCommand.SET_AUTO_CHANGE_EFFECTS_MODE.command -> mainViewModel.stripConfig.toggleAutoModeState()
                     }
                 }
 
                 ConnectStatus.RECEIVE_REQUEST -> {
+                    connectToMcuStatus.value = ConnectStatus.CONNECT
+
                     // Ответ пришёл в следующем виде: "command: config1=value1;config2=value1;..."
                     // Получаем команду, на которую дан ответ и тело самого ответа
                     val requestCommand = HttpHandler.requestMessage.substringBefore(": ", "")
                     val requestBody = HttpHandler.requestMessage.substringAfter(": ", "")
-
-                    Log.d("MY_LOGS", "New Command! RequestMessage: ${HttpHandler.requestMessage} \n$requestCommand :: $requestBody\n ")
 
                     when(requestCommand) {
 
@@ -322,10 +324,10 @@ class MainActivity : AppCompatActivity() {
                                 // Имя текущей настроки и её значение
                                 val configName = oneConfig.substringBefore("=", "")
                                 val configValue = try {
-                                    oneConfig.substringAfter("=", "").toInt( if(configName == "curBaseColor") 16 else 10 )
+                                        if(configName == "") -1
+                                        else oneConfig.substringAfter("=", "").toInt( if(configName == "curBaseColor") 16 else 10 )
                                     } catch (e: NumberFormatException) {
-                                        addToLogList(LogTypes.ERROR,
-                                            "Exception: NumberFormatException with ESP answer: ${HttpHandler.requestMessage}")
+                                        addToLogList(LogTypes.ERROR, "Exception: NumberFormatException with ESP answer: ${HttpHandler.requestMessage}")
                                         -1
                                     }
 
@@ -352,12 +354,9 @@ class MainActivity : AppCompatActivity() {
                             }
                             mainViewModel.stripConfig.state.value = if(configValue == 1) State.ENABLE else State.DISABLE
                         }
-                        else -> connectToMcuStatus.postValue(ConnectStatus.ERROR_IN_COMMAND)
+                        McuCommand.SAVE_ALL_CONFIG.command -> HttpHandler.lastCommand = ""
+                        else -> {}
                     }
-
-                    connectToMcuStatus.value = ConnectStatus.CONNECT
-                    Log.d("MY_LOGS", "ledStripConfig: ${mainViewModel.stripConfig} ")
-                    Log.d("MY_LOGS", "Mcu status after receive command: ${connectToMcuStatus.value} ")
                 }
                 else -> {}
             }
@@ -429,6 +428,8 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton("Позже") { dialog, _ ->
+                addToLogList(LogTypes.NOTE,
+                    "Новая версия не была установлена!")
                 dialog.cancel()
             }
             .create()
@@ -439,6 +440,62 @@ class MainActivity : AppCompatActivity() {
         parent.gravity = Gravity.CENTER_HORIZONTAL
         val leftSpacer = parent.getChildAt(1)
         leftSpacer.visibility = View.GONE
+    }
+
+
+    // Удание .apk файлов этого приложения, если они есть
+    @RequiresApi(Build.VERSION_CODES.R)
+    private fun deleteApkFiles(){
+        // Если доступ уже есть, то не запрашиваем его повторно
+        if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(
+                ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                Uri.parse("package:" + BuildConfig.APPLICATION_ID)
+            )
+            //startActivityForResult(intent, 501)
+
+            // Initialize the variable in before activity creation is complete.
+            val storagePermissionResultLauncher = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) {
+                if (Environment.isExternalStorageManager()) {
+                    findAndDeleteFiles()
+                } else {
+                    addToLogList(LogTypes.NOTE, "Пользователь не дал разрешение на доступ к файлам!" +
+                            "<br>.apk файлы не были удалены!")
+                }
+            }
+
+            // launch the above intent.
+            storagePermissionResultLauncher.launch(intent)
+        }
+
+        // Разрешение уже есть. Удаляем .apk файлы!
+        findAndDeleteFiles()
+    }
+
+    private fun findAndDeleteFiles() {
+        try {
+            // Получаем папку "загрузки"
+            val f = File(Environment.getExternalStorageDirectory().absolutePath + "/Download/")
+
+            // Просматриваем все её файлы и ищем файлы вида: smart-garland-v*.apk для удаления
+            if (f.exists() && f.isDirectory) {
+                val p = Pattern.compile("smart-garland-v.*\\.apk")  // Паттерн, по которому удаляются файлы
+                f.listFiles { file ->
+                    val findRes = p.matcher(file.name).matches()
+                    if(findRes) {
+                        file.delete()
+                        addToLogList(LogTypes.NOTE, "Успешно удалён файл: ${file.name}")
+                    }
+                    findRes
+                }
+            } else {
+                addToLogList(LogTypes.NOTE, "Не удалосось удалить скачанный .apk file: директория <br>${f.path}<br>не существует или не найдена!")
+            }
+        } catch (e : Exception) {
+            addToLogList(LogTypes.NOTE, "Возникло исключение при поиске директории или удалении файла!!! ${e.message}")
+        }
     }
 }
 

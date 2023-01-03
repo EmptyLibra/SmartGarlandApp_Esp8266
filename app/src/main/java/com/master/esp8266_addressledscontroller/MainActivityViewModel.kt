@@ -15,7 +15,7 @@ enum class State {
 enum class McuCommand (var command: String){
     GET_ALL_CONFIG("getAllConfig"), SAVE_ALL_CONFIG("saveAllConfig"),
     CHANGE_EFFECT("changeEffect"), SET_BASE_COLOR("setBaseColor"),
-    SET_AUTO_CHANGE_EFFECT_MODE("setAutoChangeEffectMode"),
+    SET_AUTO_CHANGE_EFFECTS_MODE("setAutoChangeEffectsMode"),
     SET_CUR_EFFECT_DELAY_MS("setCurEffectDelayMs"),
     SET_LED_STRIP_STATE("setLedStripState"),
 }

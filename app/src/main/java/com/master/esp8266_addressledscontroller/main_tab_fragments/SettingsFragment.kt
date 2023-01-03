@@ -1,27 +1,16 @@
 package com.master.esp8266_addressledscontroller.main_tab_fragments
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.SeekBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import com.master.esp8266_addressledscontroller.*
 import com.master.esp8266_addressledscontroller.databinding.FragmentSettingsBinding
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.URL
-import java.net.URLConnection
 
 
 class SettingsFragment : Fragment() {
@@ -29,7 +18,7 @@ class SettingsFragment : Fragment() {
     private lateinit var fragMainBinding: FragmentSettingsBinding
 
     // ViewModel главной активности
-    private val mainViewModel: MainActivityViewModel by viewModels()
+    private val mainViewModel: MainActivityViewModel by activityViewModels()
 
     // Обработчик http запросов
     private val httpHandler = HttpHandler.newInstance()
@@ -50,6 +39,8 @@ class SettingsFragment : Fragment() {
         // Привязка Layout к фрагменту
         fragMainBinding = FragmentSettingsBinding.inflate(inflater, container, false)
 
+        setViewsEnabled(false)
+
         /*====================== Прослушивание изменений у LiveData =========================*/
         observeConnectToMcuStatus() // Наблюдатель за состоянием статуса подключения
         observeStripState()         // Наблюдатель за состоянием гирлянды (включена, выключена)
@@ -68,20 +59,21 @@ class SettingsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         setViewsEnabled(false)
-        MainActivity.connectToMcuStatus.value = ConnectStatus.INIT_VALUE
         httpHandler.post( "cmd?${McuCommand.GET_ALL_CONFIG.command}=1")
     }
 
+    // Сохранение всех данных перед уничтожением фрагмента
     override fun onDestroy() {
         super.onDestroy()
-        HttpHandler.lastCommand = ""
+        httpHandler.post( "cmd?${McuCommand.SAVE_ALL_CONFIG.command}=1")
     }
 
     /*###################### Обработчики нажатий ############################*/
     // Назначение слушателя нажатий для переключателя состояния гирлянды
     private fun setSwitchConnectOnClickListener() = with(fragMainBinding){
         switchConnect.setOnCheckedChangeListener { _, isChecked ->
-            Log.d("MY_LOGS", " Switch check!!")
+            if(HttpHandler.lastCommand == "") return@setOnCheckedChangeListener
+
             if(MainActivity.connectToMcuStatus.value == ConnectStatus.IN_PROGRESS) {
                 switchConnect.isChecked = !isChecked
                 return@setOnCheckedChangeListener
@@ -95,7 +87,9 @@ class SettingsFragment : Fragment() {
     // Назначение слушателя нажатий для радио-кнопок авторежим
     private fun setRadioButtonsOnClickListener() =with(fragMainBinding){
         radioGroup.setOnCheckedChangeListener{ _, _ ->
-            Log.d("MY_LOGS", " in RadioButtons Listener, ConnectStatus: ${MainActivity.connectToMcuStatus.value}!")
+
+            if(!radioButtonAutoChangeEn.isEnabled) return@setOnCheckedChangeListener
+
             if(MainActivity.connectToMcuStatus.value == ConnectStatus.IN_PROGRESS ||
                         mainViewModel.stripConfig.state.value == State.DISABLE)
             {
@@ -109,12 +103,12 @@ class SettingsFragment : Fragment() {
             }
 
             if (editTextTextOneEffectTime.text.isEmpty()) {
-                httpHandler.post("cmd?${McuCommand.SET_AUTO_CHANGE_EFFECT_MODE.command}=" +
+                httpHandler.post("cmd?${McuCommand.SET_AUTO_CHANGE_EFFECTS_MODE.command}=" +
                         (if (radioButtonAutoChangeEn.isChecked) "1" else "0") +
                         "&setAutoCahngeEffectsMaxTime=${60000U}")
             } else {
                 val delayTime: Int = editTextTextOneEffectTime.text.toString().toInt()
-                httpHandler.post("cmd?${McuCommand.SET_AUTO_CHANGE_EFFECT_MODE.command}=" +
+                httpHandler.post("cmd?${McuCommand.SET_AUTO_CHANGE_EFFECTS_MODE.command}=" +
                         (if (radioButtonAutoChangeEn.isChecked) "1" else "0") +
                         "&setAutoCahngeEffectsMaxTime=${delayTime * 1000}")
             }
@@ -170,14 +164,12 @@ class SettingsFragment : Fragment() {
                 else -> {}
             }
 
-            setViewsEnabled(it == ConnectStatus.CONNECT)
+            setViewsEnabled(it == ConnectStatus.CONNECT && mainViewModel.stripConfig.state.value == State.ENABLE)
             when(it) {
                 ConnectStatus.NOT_CONNECT, ConnectStatus.ERROR_IN_COMMAND -> {
-                    Log.d("MY_LOGS", "Connect to MCU change. New ConnectState: ${MainActivity.connectToMcuStatus.value} : lastCommand: ${HttpHandler.lastCommand}")
-
                     when(HttpHandler.lastCommand) {
                         McuCommand.SET_LED_STRIP_STATE.command -> toggleSwitchConnect()
-                        McuCommand.SET_AUTO_CHANGE_EFFECT_MODE.command -> toggleRadioButtons()
+                        McuCommand.SET_AUTO_CHANGE_EFFECTS_MODE.command -> toggleRadioButtons()
                     }
                 }
                 else -> {}
@@ -186,29 +178,34 @@ class SettingsFragment : Fragment() {
     }
 
     // Наблюдатель за состоянием гирлянды (включена, выключена)
-    private fun observeStripState(){
+    private fun observeStripState() =with(fragMainBinding){
         mainViewModel.stripConfig.state.observe(viewLifecycleOwner) {
             setViewsEnabled(it == State.ENABLE)
-
-            Log.d("MY_LOGS", "Strip state change. New state: ${mainViewModel.stripConfig.state.value} : mcuStatus ${MainActivity.connectToMcuStatus.value}")
-
-            if((it == State.DISABLE || it == State.ENABLE) &&
-                MainActivity.connectToMcuStatus.value == ConnectStatus.CONNECT) {
-                toggleSwitchConnect()
+            if(MainActivity.connectToMcuStatus.value == ConnectStatus.CONNECT) {
+                switchConnect.setOnCheckedChangeListener(null)
+                when(it) {
+                    State.ENABLE -> switchConnect.isChecked = true
+                    State.DISABLE -> switchConnect.isChecked = false
+                    else -> {}
+                }
+                switchConnect.text = if(switchConnect.isChecked) "Выключить" else "Включить"
+                setSwitchConnectOnClickListener()
             }
         }
     }
 
     // Наблюдатель за состоянием авто-смены эффектов
-    private fun observeAutoModeState(){
+    private fun observeAutoModeState() =with(fragMainBinding){
         mainViewModel.stripConfig.autoModeState.observe(viewLifecycleOwner) {
-            Log.d("MY_LOGS", "AutoMode change. New state: ${mainViewModel.stripConfig.autoModeState.value} : mcuStatus ${MainActivity.connectToMcuStatus.value}")
-
             // Изменяем состояние переключателей RadioButton
-            if(((it == State.DISABLE) || (it == State.ENABLE)) &&
-                MainActivity.connectToMcuStatus.value == ConnectStatus.CONNECT)
-            {
-                toggleRadioButtons()
+            if(MainActivity.connectToMcuStatus.value == ConnectStatus.CONNECT) {
+                radioGroup.setOnCheckedChangeListener(null)
+                when(it) {
+                    State.DISABLE -> radioGroup.check(radioButtonAutoChangeDis.id)
+                    State.ENABLE -> radioGroup.check(radioButtonAutoChangeEn.id)
+                    else -> {}
+                }
+                setRadioButtonsOnClickListener()
             }
         }
     }
@@ -216,7 +213,6 @@ class SettingsFragment : Fragment() {
     /*==================== Вспомогательные функции =========================*/
     // Переключить обратко radioButtons, ответственные за авто-режим
     private fun toggleRadioButtons() = with(fragMainBinding){
-        Log.d("MY_LOGS", " Toggle radioButons!")
         radioGroup.setOnCheckedChangeListener(null)
         when(radioGroup.checkedRadioButtonId) {
             radioButtonAutoChangeDis.id -> radioGroup.check(radioButtonAutoChangeEn.id)
@@ -227,7 +223,6 @@ class SettingsFragment : Fragment() {
 
     // Переключить обратко switch, ответственный за состояние ленты
     private fun toggleSwitchConnect() = with(fragMainBinding){
-        Log.d("MY_LOGS", " Toggle switch connect!")
         switchConnect.setOnCheckedChangeListener(null)
         switchConnect.isChecked = !switchConnect.isChecked
         switchConnect.text = if(switchConnect.isChecked) "Выключить" else "Включить"

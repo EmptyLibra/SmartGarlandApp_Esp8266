@@ -53,7 +53,8 @@ class HttpHandler {
 
     // Принимаем ответ
     private fun receiveRequest(command: String, response: Response) {
-        lastCommand = command.substringBefore("=").substringAfter("?", "")
+        val temp = command.substringBefore("=").substringAfter("?", "")
+        lastCommand = if(temp == McuCommand.SAVE_ALL_CONFIG.command) "" else temp
 
         if(response.isSuccessful) {
             requestMessage = response.body()?.string().toString()
