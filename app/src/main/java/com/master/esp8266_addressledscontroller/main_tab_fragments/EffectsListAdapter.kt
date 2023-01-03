@@ -1,4 +1,4 @@
-package com.master.esp8266_addressledscontroller.nav_fragments
+package com.master.esp8266_addressledscontroller.main_tab_fragments
 
 import android.view.LayoutInflater
 import android.view.View

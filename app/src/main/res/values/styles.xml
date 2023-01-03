@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="divider">
-        <item name="android:layout_width">250dp</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
         <item name="android:background">@color/purple_700</item>
     </style>
 
     <style name="cardView">
-        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginHorizontal">8dp</item>
         <item name="android:background">@drawable/app_background</item>
         <item name="cardBackgroundColor">@android:color/transparent</item>
     </style>
