@@ -33,6 +33,12 @@ android {
         viewBinding true
     }
     namespace 'com.master.esp8266_addressledscontroller'
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "smart-garland-v${variant.versionName}.apk"
+        }
+    }
 }
 
 dependencies {

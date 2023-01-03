@@ -11,16 +11,6 @@
         android:layout_width="match_parent"
         android:layout_height="0dp">
 
-        <Button
-            android:id="@+id/testButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginEnd="16dp"
-            android:text="Button"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView3" />
-
         <androidx.cardview.widget.CardView
             android:id="@+id/cardView1"
             style="@style/cardView"
@@ -203,5 +193,15 @@
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
+
+        <View
+            android:id="@+id/view"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginStart="152dp"
+            android:layout_marginTop="32dp"
+            android:visibility="invisible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cardView3" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

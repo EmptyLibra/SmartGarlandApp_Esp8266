@@ -30,7 +30,7 @@ data class LogElement(var Date: LocalTime, var Type: LogTypes, var message: Stri
             val date = try {
                 LocalTime.parse(strWithoutHtml.substringBefore(" [", ""))
             } catch(e: DateTimeParseException) {
-                MainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ERROR, "Exception in parsing string to Date (function: fromString)"))
+                MainActivity.addToLogList(LogTypes.ERROR, "Exception in parsing string to Date (function: fromString)")
                 LocalTime.MIN
             }
             strWithoutHtml = strWithoutHtml.replace(Regex(""".* \["""), "")
@@ -38,7 +38,7 @@ data class LogElement(var Date: LocalTime, var Type: LogTypes, var message: Stri
             val type = try {
                 LogTypes.valueOf(strWithoutHtml.substringBefore("]:", ""))
             } catch(e: IllegalArgumentException ) {
-                MainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ERROR, "Exception in parsing string to LogTypes (function: fromString)"))
+                MainActivity.addToLogList(LogTypes.ERROR, "Exception in parsing string to LogTypes (function: fromString)")
                 LogTypes.ERROR
             }
             strWithoutHtml = strWithoutHtml.replace(Regex(""".*]:<br> """), "")

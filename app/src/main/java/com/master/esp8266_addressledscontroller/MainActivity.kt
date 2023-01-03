@@ -2,8 +2,11 @@ package com.master.esp8266_addressledscontroller
 
 import android.R.id
 import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.text.method.ScrollingMovementMethod
@@ -11,6 +14,8 @@ import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -25,6 +30,10 @@ import com.master.esp8266_addressledscontroller.main_tab_fragments.SettingsFragm
 import com.master.esp8266_addressledscontroller.side_nav_fragments.DrawingFragment
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.URL
+import java.net.URLConnection
 import java.time.LocalTime
 
 
@@ -73,8 +82,18 @@ class MainActivity : AppCompatActivity() {
         var connectToMcuStatus = MutableLiveData(ConnectStatus.INIT_VALUE)
 
         // Логи с отладочной информацией
-        val logList = mutableListOf(LogElement(LocalTime.now(),LogTypes.NOTE,
+        private val logList = mutableListOf(LogElement(LocalTime.now(),LogTypes.NOTE,
                 "##########<br>Это консоль с отладочной информацией<br>##########<br>"))
+
+        fun addToLogList(logType: LogTypes, message: String){
+            if(logList.size < 1000) {
+                logList.add(LogElement(LocalTime.now(), logType, message))
+            } else {
+                logList.clear()
+                logList.add(LogElement(LocalTime.now(),LogTypes.NOTE,
+                    "##########<br>Это консоль с отладочной информацией<br>##########<br>"))
+            }
+        }
     }
 
     /*###################### Методы жизненного цикла активности ############################*/
@@ -116,6 +135,9 @@ class MainActivity : AppCompatActivity() {
 
         // Обработчик пунктов выдвижного меню
         setNavItemSelectListener()
+
+        // Проверка наличия обновления
+        checkForUpdate()
     }
 
     // Сохранение всех данных перед уничтожением фрагмента
@@ -140,7 +162,9 @@ class MainActivity : AppCompatActivity() {
         super.onRestoreInstanceState(savedInstanceState)
         connectToMcuStatus.value =  ConnectStatus.valueOf(savedInstanceState.getString("Connect Status") ?: ConnectStatus.NOT_CONNECT.toString())
 
-        val logListSize = savedInstanceState.getInt("Log list size", 0)
+        var logListSize = savedInstanceState.getInt("Log list size", 0)
+
+        if(logListSize > 1000) logListSize = 1000
 
         for(index in 0..logListSize){
             logList.add(LogElement.fromString(savedInstanceState.getString("LogElem$index", "")))
@@ -282,8 +306,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 ConnectStatus.RECEIVE_REQUEST -> {
-                    connectToMcuStatus.postValue(ConnectStatus.CONNECT)
-
                     // Ответ пришёл в следующем виде: "command: config1=value1;config2=value1;..."
                     // Получаем команду, на которую дан ответ и тело самого ответа
                     val requestCommand = HttpHandler.requestMessage.substringBefore(": ", "")
@@ -302,8 +324,8 @@ class MainActivity : AppCompatActivity() {
                                 val configValue = try {
                                     oneConfig.substringAfter("=", "").toInt( if(configName == "curBaseColor") 16 else 10 )
                                     } catch (e: NumberFormatException) {
-                                        logList.add(LogElement(LocalTime.now(), LogTypes.ERROR,
-                                            "Exception: NumberFormatException with ESP answer: ${HttpHandler.requestMessage}"))
+                                        addToLogList(LogTypes.ERROR,
+                                            "Exception: NumberFormatException with ESP answer: ${HttpHandler.requestMessage}")
                                         -1
                                     }
 
@@ -314,16 +336,109 @@ class MainActivity : AppCompatActivity() {
                                     "effectDelaySec" -> mainViewModel.stripConfig.oneEffectDelaySec.value = configValue
                                     "curEffectIndex" -> mainViewModel.stripConfig.curEffectIndex.value = configValue
                                     "curBaseColor" -> mainViewModel.stripConfig.curBaseColor = configValue
+                                    "" -> {}
                                     else -> connectToMcuStatus.postValue(ConnectStatus.ERROR_IN_COMMAND)
                                 }
                             }
+
+                        }
+                        McuCommand.SET_LED_STRIP_STATE.command -> {
+                            val configValue = try {
+                                requestBody.split(";")[0].substringAfter("=", "").toInt()
+                            } catch (e: NumberFormatException) {
+                                addToLogList(LogTypes.ERROR,
+                                    "Exception: NumberFormatException with ESP answer: ${HttpHandler.requestMessage}")
+                                -1
+                            }
+                            mainViewModel.stripConfig.state.value = if(configValue == 1) State.ENABLE else State.DISABLE
                         }
                         else -> connectToMcuStatus.postValue(ConnectStatus.ERROR_IN_COMMAND)
                     }
+
+                    connectToMcuStatus.value = ConnectStatus.CONNECT
+                    Log.d("MY_LOGS", "ledStripConfig: ${mainViewModel.stripConfig} ")
+                    Log.d("MY_LOGS", "Mcu status after receive command: ${connectToMcuStatus.value} ")
                 }
                 else -> {}
             }
         }
+    }
+
+    /*==================== Вспомогательные функции =========================*/
+    //---Автоматическое обновление приложения ------
+    // Проверка наличия обновления приложения
+    private fun checkForUpdate(){
+        Thread {
+            try {
+                val url = URL("https://github.com/EmptyLibra/SmartGarlandApp_Esp8266/releases")
+                val con1: URLConnection = url.openConnection()
+                val htmlString = BufferedReader(InputStreamReader(con1.getInputStream())).readText()
+
+                val matchRes = Regex("""/releases/tag/v.*"""").find(htmlString)
+
+                if(matchRes != null) {
+                    val newVersion = matchRes.groups[0].toString().substringAfter("/v").substringBefore("\"")
+
+                    this@MainActivity.runOnUiThread {
+                        if(newVersion > BuildConfig.VERSION_NAME) {
+                            addToLogList(LogTypes.NOTE,
+                                "Обновляюсь до новой версии:<br>$newVersion (Текущая версия: ${BuildConfig.VERSION_NAME})")
+                            createDialogAskToUpdate(newVersion)
+
+                        } else {
+
+                            addToLogList(LogTypes.NOTE,
+                                "У вас установлена последняя версия: ${BuildConfig.VERSION_NAME}")
+                        }
+                    }
+                } else {
+                    addToLogList(LogTypes.ERROR,
+                        "Ошибка в поиске новой версии на сайте:<br>https://github.com/${url.path}<br><br>" +
+                                "Сделайте скриншот и отправьте его разработчику!!!")
+                }
+            } catch (e: Exception) {
+                addToLogList(LogTypes.ERROR,
+                    "При открытии ссылки для проверки наличия обновления, возникло следующее исключение:<br>${e.message}<br><br>" +
+                            "Сделайте скриншот и отправьте его разработчику!!!")
+            }
+        }.start()
+    }
+
+    // Создание диалога с предложением обновить приложения
+    private fun createDialogAskToUpdate(newVersion: String){
+        // Настройка текста основного сообщения
+        val textView = TextView(this@MainActivity)
+        textView.text = "Доступна новая версия приложения!"
+        textView.gravity = Gravity.CENTER
+        textView.textSize = 20.0F
+
+        val message ="Новая версия: v$newVersion\n" +
+                "Текущая версия: ${BuildConfig.VERSION_NAME}\n" +
+                "Хотите обновить приложение?"
+
+        // Создание диалогового окна с двумя кнопками
+        val dialog = AlertDialog.Builder(this@MainActivity)
+            .setCustomTitle(textView)
+            .setMessage(message)
+            .setCancelable(false)
+            .setPositiveButton("Да") { dialog, _ ->
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data =
+                    Uri.parse("https://github.com/EmptyLibra/SmartGarlandApp_Esp8266/releases/download/v${newVersion}/smart-garland-v${newVersion}.apk")
+                startActivity(intent)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Позже") { dialog, _ ->
+                dialog.cancel()
+            }
+            .create()
+        dialog.show()
+
+        // Смещение кнопок к центру
+        val parent = dialog.getButton(AlertDialog.BUTTON_NEGATIVE).parent as LinearLayout
+        parent.gravity = Gravity.CENTER_HORIZONTAL
+        val leftSpacer = parent.getChildAt(1)
+        leftSpacer.visibility = View.GONE
     }
 }
 

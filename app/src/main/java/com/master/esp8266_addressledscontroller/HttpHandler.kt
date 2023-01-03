@@ -6,7 +6,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
-import java.time.LocalTime
 
 class HttpHandler {
     private val client = OkHttpClient()                      // Объект клиента
@@ -42,7 +41,7 @@ class HttpHandler {
                 receiveRequest(command, response)
 
             } catch (i: IOException) {
-                lastCommand = command
+                lastCommand = command.substringBefore("=").substringAfter("?", "")
 
                 // Возникло исключение при отправке, устанавливаем статус
                 MainActivity.connectToMcuStatus.postValue(ConnectStatus.NOT_CONNECT)
@@ -60,7 +59,7 @@ class HttpHandler {
             requestMessage = response.body()?.string().toString()
 
             if(requestMessage.contains("Unknown Command")) {
-                MainActivity.logList.add(LogElement(LocalTime.now(), LogTypes.ERROR, "ESP receive Unknown Command!<br> $requestMessage"))
+                MainActivity.addToLogList(LogTypes.ERROR, "ESP receive Unknown Command!<br> $requestMessage")
                 MainActivity.connectToMcuStatus.postValue(ConnectStatus.ERROR_IN_COMMAND)
             } else {
                 MainActivity.connectToMcuStatus.postValue(ConnectStatus.RECEIVE_REQUEST)
@@ -70,12 +69,12 @@ class HttpHandler {
 
         } else {
             MainActivity.connectToMcuStatus.postValue(ConnectStatus.NOT_CONNECT)
-            writeStrToLogs(LogTypes.ERROR, "Esp: NO ANSWER!")
+            MainActivity.addToLogList(LogTypes.ERROR, "Esp: NO ANSWER!")
         }
     }
 
     private fun writeStrToLogs(LogType: LogTypes, message: String){
         Log.d("MY_LOGS", message)
-        MainActivity.logList.add(LogElement(LocalTime.now(), LogType, message))
+        MainActivity.addToLogList(LogType, message)
     }
 }
